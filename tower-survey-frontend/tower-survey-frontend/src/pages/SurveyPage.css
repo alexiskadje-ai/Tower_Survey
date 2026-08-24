@@ -1,0 +1,72 @@
+.survey-page__loading {
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  color: var(--charcoal-400);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.survey-page__site {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--teal-050);
+  border-bottom: 1px solid var(--border);
+}
+
+.survey-page__site-code {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--teal-800, var(--teal-700));
+}
+
+.survey-page__site-name {
+  font-size: var(--text-sm);
+  color: var(--charcoal-600);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.survey-page__body {
+  flex: 1;
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-3) var(--space-7);
+  align-items: flex-start;
+}
+
+.survey-page__form {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-5) var(--space-4);
+}
+
+.survey-page__section-title {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-3);
+  border-bottom: 2px solid var(--teal-100);
+}
+
+.survey-page__nav {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.survey-page__nav .btn { flex: 1; }
+
+.survey-page__warning {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  background: var(--status-pending-bg);
+  color: var(--status-pending);
+  font-size: var(--text-xs);
+  border-radius: var(--radius-sm);
+  line-height: 1.4;
+}

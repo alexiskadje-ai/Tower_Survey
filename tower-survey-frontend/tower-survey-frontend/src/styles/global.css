@@ -1,0 +1,140 @@
+@import "./tokens.css";
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--stone-100);
+  color: var(--charcoal-900);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--charcoal-900);
+  margin: 0;
+  line-height: 1.2;
+}
+
+p { margin: 0; }
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* Focus clavier visible partout — accessibilité terrain (tablette + clavier Bluetooth) */
+:focus-visible {
+  outline: 3px solid var(--teal-600);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--teal-100);
+  color: var(--teal-900);
+}
+
+/* Scrollbar discrète */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+.app-shell {
+  max-width: 640px;
+  margin: 0 auto;
+  min-height: 100%;
+  background: var(--stone-100);
+  display: flex;
+  flex-direction: column;
+}
+
+.btn {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: var(--text-base);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  transition: transform 0.08s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.btn:active { transform: scale(0.98); }
+
+.btn-primary {
+  background: var(--teal-600);
+  color: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+.btn-primary:hover { background: var(--teal-700); }
+.btn-primary:disabled {
+  background: var(--charcoal-200);
+  color: var(--charcoal-400);
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: var(--white);
+  color: var(--charcoal-900);
+  border: 1.5px solid var(--border-strong);
+}
+.btn-secondary:hover { border-color: var(--teal-600); color: var(--teal-700); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--charcoal-600);
+  padding: 0 var(--space-3);
+}
+
+.card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border);
+}
+
+.field-label {
+  display: block;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--charcoal-700);
+  margin-bottom: var(--space-2);
+}
+
+.text-input {
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-strong);
+  background: var(--white);
+  color: var(--charcoal-900);
+  font-size: var(--text-base);
+}
+.text-input:focus { border-color: var(--teal-600); }
+
+.mono { font-family: var(--font-mono); letter-spacing: -0.01em; }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-3);
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}

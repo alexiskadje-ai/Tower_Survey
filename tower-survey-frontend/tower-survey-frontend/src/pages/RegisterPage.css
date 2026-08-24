@@ -1,0 +1,39 @@
+.login__error {
+  background: var(--status-nok-bg);
+  color: var(--status-nok);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+}
+
+.login__success {
+  background: var(--teal-050);
+  color: var(--teal-800);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+}
+
+.login__footnote {
+  margin-top: var(--space-6);
+  font-size: var(--text-xs);
+  color: var(--charcoal-400);
+  text-align: center;
+  max-width: 320px;
+}
+
+.login__link {
+  color: var(--teal-700);
+  text-decoration: underline;
+  padding: 0;
+}
+
+.register__password-hint {
+  font-size: var(--text-xs);
+  color: var(--charcoal-500);
+  margin-top: var(--space-1);
+}

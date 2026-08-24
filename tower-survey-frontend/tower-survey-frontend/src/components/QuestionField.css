@@ -1,0 +1,115 @@
+.qfield {
+  margin-bottom: var(--space-5);
+}
+
+.qfield__label {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.qfield__required {
+  color: var(--status-nok);
+}
+
+.qfield__unit {
+  color: var(--charcoal-400);
+  font-weight: 500;
+}
+
+.qfield__textarea {
+  padding: var(--space-3) var(--space-4);
+  resize: vertical;
+  min-height: var(--tap-min);
+  line-height: 1.4;
+}
+
+.qfield__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.qfield__choice {
+  min-height: var(--tap-min);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-strong);
+  background: var(--white);
+  color: var(--charcoal-700);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  transition: all 0.12s ease;
+}
+
+.qfield__choice:active { transform: scale(0.97); }
+
+.qfield__choice.is-selected {
+  background: var(--teal-600);
+  border-color: var(--teal-600);
+  color: var(--white);
+}
+
+.qfield__choice--ok.is-selected {
+  background: var(--status-ok);
+  border-color: var(--status-ok);
+}
+
+.qfield__choice--nok.is-selected {
+  background: var(--status-nok);
+  border-color: var(--status-nok);
+}
+
+.qfield__hidden-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.qfield__photo-btn {
+  width: 100%;
+  min-height: 64px;
+  border-radius: var(--radius-md);
+  border: 2px dashed var(--border-strong);
+  background: var(--stone-050);
+  color: var(--charcoal-600);
+  font-weight: 600;
+  font-size: var(--text-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.qfield__photo-btn:active { transform: scale(0.99); }
+
+.qfield__photo-preview {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1.5px solid var(--border-strong);
+  display: block;
+}
+
+.qfield__photo-preview img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+}
+
+.qfield__photo-retake {
+  position: absolute;
+  bottom: var(--space-2);
+  right: var(--space-2);
+  background: rgba(35, 36, 35, 0.72);
+  color: var(--white);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+}

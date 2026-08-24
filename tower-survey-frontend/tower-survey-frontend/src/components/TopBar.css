@@ -1,0 +1,67 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.topbar__mark {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.topbar__brandtext {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.topbar__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-base);
+  color: var(--charcoal-900);
+}
+
+.topbar__subtitle {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--teal-600);
+}
+
+.topbar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.topbar__user {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--charcoal-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar__initials {
+  color: var(--white);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  font-family: var(--font-mono);
+}

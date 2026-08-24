@@ -1,0 +1,72 @@
+:root {
+  /* ---- Couleurs de marque (extraites du logo TELEINFRA) ---- */
+  --teal-900: #0F5D61;
+  --teal-700: #146F74;
+  --teal-600: #1A888E;   /* teal de marque exact */
+  --teal-500: #2A9FA5;
+  --teal-100: #E1F1F1;
+  --teal-050: #F0F8F8;
+
+  --charcoal-900: #232423;
+  --charcoal-700: #3A3B3A;
+  --charcoal-600: #4A4B4A;  /* gris de marque exact */
+  --charcoal-400: #74756F;
+  --charcoal-200: #C7C9C4;
+
+  /* ---- Statuts terrain ---- */
+  --status-ok: #2E8B57;
+  --status-ok-bg: #E7F4EC;
+  --status-nok: #C1443C;
+  --status-nok-bg: #FBEAE8;
+  --status-pending: #C58B00;
+  --status-pending-bg: #FBF1DC;
+  --status-offline: #8A8D87;
+
+  /* ---- Neutres / fond ---- */
+  --stone-100: #F5F6F4;   /* fond app — pas blanc pur, plus doux en extérieur */
+  --stone-050: #FAFBFA;
+  --white: #FFFFFF;
+  --border: #E3E5E0;
+  --border-strong: #CBCEC7;
+
+  /* ---- Typographie ---- */
+  --font-display: "Space Grotesk", "Helvetica Neue", sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "Courier New", monospace;
+
+  /* ---- Échelle type ---- */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+
+  /* ---- Espacement ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* ---- Rayons / ombres ---- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 1px 2px rgba(35, 36, 35, 0.06);
+  --shadow-md: 0 4px 16px rgba(35, 36, 35, 0.10);
+  --shadow-card: 0 1px 3px rgba(35, 36, 35, 0.08), 0 1px 2px rgba(35, 36, 35, 0.04);
+
+  /* ---- Cible tactile min. (usage terrain / gants) ---- */
+  --tap-min: 48px;
+}
+
+/* Respect des préférences de mouvement réduit */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

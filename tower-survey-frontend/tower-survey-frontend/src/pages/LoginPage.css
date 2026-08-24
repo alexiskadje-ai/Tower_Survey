@@ -1,0 +1,82 @@
+.login {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6) var(--space-5);
+  background: linear-gradient(180deg, var(--teal-050) 0%, var(--stone-100) 45%);
+}
+
+.login__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--space-6);
+}
+
+.login__mark {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  margin-bottom: var(--space-3);
+}
+
+.login__title {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+
+.login__subtitle {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--teal-700);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.login__card {
+  width: 100%;
+  max-width: 380px;
+  padding: var(--space-6) var(--space-5);
+}
+
+.login__submit {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+.login__error {
+  background: var(--status-nok-bg);
+  color: var(--status-nok);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+}
+
+.login__success {
+  background: var(--teal-050);
+  color: var(--teal-800);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+}
+
+.login__footnote {
+  margin-top: var(--space-6);
+  font-size: var(--text-xs);
+  color: var(--charcoal-400);
+  text-align: center;
+  max-width: 320px;
+}
+
+.login__link {
+  color: var(--teal-700);
+  text-decoration: underline;
+  padding: 0;
+}
