@@ -55,6 +55,14 @@ export const api = {
   },
   uploadMedia: (responseId, formData) =>
     request(`/responses/${responseId}/media`, { method: "POST", body: formData, isForm: true }),
+  adminListResponses: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/admin/responses${qs ? `?${qs}` : ""}`);
+  },
+  adminResponseDetail: (id) => request(`/admin/responses/${id}`),
+  adminExportCsv: () => request("/admin/responses/export/csv"),
+  adminExportExcel: () => request("/admin/responses/export/excel"),
+  adminEmailExport: (body) => request("/admin/responses/email", { method: "POST", body }),
 };
 
 export { getToken };

@@ -111,8 +111,8 @@ async function seed() {
     if (existingAdmin.length === 0) {
       const passwordHash = await bcrypt.hash("ChangeMe123!", 10);
       await client.query(
-        `INSERT INTO users (org_id, full_name, matricule, role, password_hash)
-         VALUES ($1, 'Administrateur Système', 'ADMIN001', 'admin', $2)`,
+        `INSERT INTO users (org_id, full_name, matricule, role, password_hash, is_email_verified)
+         VALUES ($1, 'Administrateur Système', 'ADMIN001', 'admin', $2, true)`,
         [orgId, passwordHash]
       );
       console.log("✅ Compte admin créé — matricule: ADMIN001 / mot de passe: ChangeMe123!");

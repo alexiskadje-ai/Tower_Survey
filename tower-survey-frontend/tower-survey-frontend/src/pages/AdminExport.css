@@ -1,0 +1,116 @@
+.admin-export {
+  flex: 1;
+  padding: var(--space-6) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.admin-export__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.admin-export__title {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--charcoal-900);
+  letter-spacing: -0.02em;
+}
+
+.admin-export__subtitle {
+  font-size: var(--text-sm);
+  color: var(--charcoal-500);
+  font-weight: 500;
+}
+
+.admin-export__form {
+  background: linear-gradient(135deg, var(--white) 0%, #fafafa 100%);
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.admin-export__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.admin-export__radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-weight: 500;
+  cursor: pointer;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.admin-export__radio:hover {
+  border-color: var(--teal-600);
+  background: var(--teal-050);
+}
+
+.admin-export__radio input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--teal-600);
+  flex-shrink: 0;
+}
+
+.admin-export__radio svg {
+  color: var(--charcoal-600);
+  flex-shrink: 0;
+}
+
+.admin-export__error {
+  background: var(--status-nok-bg);
+  color: var(--status-nok);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border-left: 4px solid var(--status-nok);
+}
+
+.admin-export__success {
+  background: var(--teal-050);
+  color: var(--teal-800);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border-left: 4px solid var(--teal-600);
+}
+
+.admin-export__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.admin-export__actions .btn {
+  min-height: 44px;
+}
+
+@media (min-width: 640px) {
+  .admin-export__options {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .admin-export__options .admin-export__radio {
+    flex: 1 1 180px;
+  }
+  .admin-export__actions {
+    flex-direction: row;
+  }
+}

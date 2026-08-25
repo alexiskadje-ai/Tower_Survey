@@ -2,7 +2,7 @@ const xlsx = require("xlsx");
 const path = require("path");
 const pool = require("../../config/db");
 
-const EXCEL_PATH = path.join(__dirname, "../../../864112967-List-of-Sites-IHS-Cameroon-Juillet-2024.xlsx");
+const EXCEL_PATH = path.join(__dirname, "../../../IHSCAM Site List 250526 - Audit PIP.xlsx");
 
 async function importSites() {
   const workbook = xlsx.readFile(EXCEL_PATH);
@@ -24,21 +24,30 @@ async function importSites() {
   let skipped = 0;
 
   for (const row of dataRows) {
-    const siteCode = String(row[1] || "").trim();
+    const operatorSiteId = String(row[1] || "").trim();
+    const ihsId = String(row[2] || "").trim();
+    const siteCode = ihsId || operatorSiteId;
+
     if (!siteCode) {
       skipped++;
       continue;
     }
 
-    const region = String(row[2] || "").trim() || null;
-    const department = String(row[3] || "").trim() || null;
-    const arrondissement = String(row[4] || "").trim() || null;
-    const addressVillage = String(row[5] || "").trim() || null;
-    const siteType = String(row[6] || "").trim() || null;
-    const heightRaw = row[7];
-    const towerHeight = typeof heightRaw === "number" ? heightRaw : Number(heightRaw) || null;
+    const state = String(row[4] || "").trim() || null;
+    const siteName = String(row[5] || "").trim() || null;
+    const accessStatus = String(row[6] || "").trim() || null;
+    const siteConfiguration = String(row[7] || "").trim() || null;
+    const cluster = String(row[8] || "").trim() || null;
+    const division = String(row[9] || "").trim() || null;
+    const subDivision = String(row[10] || "").trim() || null;
+    const town = String(row[11] || "").trim() || null;
+    const latitudeRaw = row[12];
+    const latitude = typeof latitudeRaw === "number" ? latitudeRaw : Number(latitudeRaw) || null;
+    const longitudeRaw = row[13];
+    const longitude = typeof longitudeRaw === "number" ? longitudeRaw : Number(longitudeRaw) || null;
+    const siteType = String(row[14] || "").trim() || null;
 
-    const siteName = [addressVillage, region].filter(Boolean).join(", ") || siteCode;
+    const displayName = siteName || siteCode;
 
     const client = await pool.connect();
     try {
@@ -56,8 +65,8 @@ async function importSites() {
       }
 
       await client.query(
-        `INSERT INTO sites (org_id, site_code, site_name, region, site_type, department, arrondissement, address_village, tower_height_m)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `INSERT INTO sites (org_id, site_code, site_name, region, site_type, department, arrondissement, address_village, tower_height_m, latitude, longitude, cluster)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          ON CONFLICT (site_code) DO UPDATE SET
            site_name = EXCLUDED.site_name,
            region = EXCLUDED.region,
@@ -65,8 +74,11 @@ async function importSites() {
            department = EXCLUDED.department,
            arrondissement = EXCLUDED.arrondissement,
            address_village = EXCLUDED.address_village,
-           tower_height_m = EXCLUDED.tower_height_m`,
-        [orgId, siteCode, siteName, region, siteType, department, arrondissement, addressVillage, towerHeight]
+           tower_height_m = EXCLUDED.tower_height_m,
+           latitude = EXCLUDED.latitude,
+           longitude = EXCLUDED.longitude,
+           cluster = EXCLUDED.cluster`,
+        [orgId, siteCode, displayName, state, siteType, division, subDivision, town, null, latitude, longitude, cluster]
       );
 
       await client.query("COMMIT");

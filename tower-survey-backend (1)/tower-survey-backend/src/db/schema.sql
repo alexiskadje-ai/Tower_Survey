@@ -44,6 +44,8 @@ CREATE TABLE sites (
   arrondissement    VARCHAR(100),
   address_village   VARCHAR(200),
   tower_height_m    DOUBLE PRECISION,
+  access_status     VARCHAR(100),
+  site_configuration VARCHAR(100),
   is_active         BOOLEAN DEFAULT true,
   created_at        TIMESTAMPTZ DEFAULT now()
 );

@@ -91,6 +91,7 @@ async function syncResponses(req, res, next) {
 
 /**
  * GET /api/responses?site_id=&technician_id=&date_from=&date_to=
+ * Technicians see only their own responses; admins see all.
  */
 async function listResponses(req, res, next) {
   try {
@@ -102,6 +103,11 @@ async function listResponses(req, res, next) {
     if (technician_id) { params.push(technician_id); conditions.push(`r.technician_id = $${params.length}`); }
     if (date_from) { params.push(date_from); conditions.push(`r.submitted_at >= $${params.length}`); }
     if (date_to) { params.push(date_to); conditions.push(`r.submitted_at <= $${params.length}`); }
+
+    if (req.user.role !== "admin") {
+      params.push(req.user.id);
+      conditions.push(`r.technician_id = $${params.length}`);
+    }
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 

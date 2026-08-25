@@ -1,4 +1,5 @@
 import { useAuth } from "../context/AuthContext";
+import { Settings } from "lucide-react";
 import StatusBar from "./StatusBar";
 import "./TopBar.css";
 
@@ -18,9 +19,16 @@ export default function TopBar() {
       <div className="topbar__right">
         <StatusBar />
         {user && (
-          <button type="button" className="topbar__user" onClick={logout} title="Se déconnecter">
-            <span className="topbar__initials">{user.fullName?.slice(0, 2).toUpperCase()}</span>
-          </button>
+          <>
+            {user.role === "admin" && (
+              <button type="button" className="topbar__admin" title="Admin" onClick={() => window.location.href = "/admin"}>
+                <Settings size={18} strokeWidth={2.2} color="white" />
+              </button>
+            )}
+            <button type="button" className="topbar__user" onClick={logout} title="Se déconnecter">
+              <span className="topbar__initials">{user.fullName?.slice(0, 2).toUpperCase()}</span>
+            </button>
+          </>
         )}
       </div>
     </header>
