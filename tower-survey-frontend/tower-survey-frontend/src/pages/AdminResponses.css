@@ -130,6 +130,32 @@
   margin-top: 2px;
 }
 
+.admin-responses__form-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-responses__form-icon {
+  color: var(--teal-700);
+  flex-shrink: 0;
+}
+
+.admin-responses__form-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--charcoal-900);
+  line-height: 1.2;
+}
+
+.admin-responses__form-category {
+  font-size: 10px;
+  color: var(--charcoal-500);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+
 .admin-responses__actions {
   display: flex;
   justify-content: flex-start;

@@ -9,7 +9,46 @@
 .admin-detail__header {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-3);
+}
+
+.admin-detail__form-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-4);
+  background: var(--teal-050);
+  border: 1px solid var(--teal-100);
+  border-radius: var(--radius-md);
+  color: var(--teal-700);
+}
+
+.admin-detail__form-badge[data-category="Power Audit"] {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+.admin-detail__form-badge[data-category="Site Infrastructure"] {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.admin-detail__form-badge-name {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.admin-detail__form-badge-meta {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  margin-top: 2px;
+  opacity: 0.85;
 }
 
 .admin-detail__title {
@@ -97,6 +136,26 @@
   gap: var(--space-3);
 }
 
+.admin-detail__sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.admin-detail__answer-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.admin-detail__answer-group-title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--charcoal-900);
+  padding-bottom: var(--space-2);
+  border-bottom: 2px solid var(--teal-100);
+}
+
 .admin-detail__answer {
   display: flex;
   flex-direction: column;
@@ -112,16 +171,53 @@
   border-color: var(--teal-600);
 }
 
+.admin-detail__answer-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
 .admin-detail__question {
   font-weight: 600;
   font-size: var(--text-sm);
   color: var(--charcoal-700);
 }
 
+.admin-detail__required {
+  color: var(--status-nok, #dc2626);
+  font-weight: 700;
+}
+
+.admin-detail__unit {
+  font-size: var(--text-xs);
+  color: var(--charcoal-500);
+  font-style: italic;
+}
+
 .admin-detail__value {
   font-size: var(--text-sm);
   color: var(--charcoal-700);
   word-break: break-word;
+}
+
+.admin-detail__value-sub {
+  color: var(--charcoal-500);
+  font-weight: 400;
+  font-size: var(--text-xs);
+}
+
+.admin-detail__no-value {
+  color: var(--charcoal-400);
+  font-style: italic;
+  font-size: var(--text-xs);
+}
+
+.admin-detail__empty {
+  color: var(--charcoal-500);
+  font-size: var(--text-sm);
+  font-style: italic;
+  padding: var(--space-3) 0;
 }
 
 .admin-detail__media {
@@ -175,6 +271,10 @@
 .admin-detail__actions .btn {
   min-height: 44px;
   padding: 0 var(--space-5);
+}
+
+.admin-detail__field--full {
+  grid-column: 1 / -1;
 }
 
 @media (min-width: 640px) {

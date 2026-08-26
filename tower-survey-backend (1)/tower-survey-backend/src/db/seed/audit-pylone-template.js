@@ -1,85 +1,252 @@
 /**
- * Seed du template "Audit Pylône Standard" — TELEINFRA
+ * Seed des templates "Power Audit" et "Site Infrastructure" — TELEINFRA
  * Usage : npm run db:seed
  *
  * Crée (si absent) : une organisation par défaut, un compte admin,
- * et le template complet avec ses sections et questions.
+ * et les deux templates (un par feuille du fichier Excel IHS_SBC_Site_Audit_Simplified_Template.xlsx).
  */
 const bcrypt = require("bcrypt");
 const pool = require("../../config/db");
 
 // Options réutilisables
-const OK_NOK_NA = ["OK", "NOK", "N/A"];
-const YES_NO = ["Oui", "Non"];
+const YES_NO_NA = ["Yes", "No", "N/A"];
+const PASS_FAIL_NA = ["Pass", "Fail", "N/A"];
+const GOOD_FAIR_POOR_NA = ["Good", "Fair", "Poor", "N/A"];
 
-// Définition déclarative du template — reflète les catégories métier définies plus haut
-const SECTIONS = [
+// ============================================================================
+// FORM 1 : POWER & ENERGY AUDIT (feuille 01_Power_Audit)
+// ============================================================================
+const POWER_AUDIT_SECTIONS = [
   {
-    title: "Structure Pylône",
-    icon: "tower",
+    title: "Site Identification",
+    icon: "map-pin",
     questions: [
-      { label: "Type de pylône", type: "select", options: ["Treillis (Lattice)", "Monopole", "Haubané (Guyed)", "Rooftop"], required: true },
-      { label: "Hauteur totale (m)", type: "number", unit: "m", required: true },
-      { label: "Nombre de niveaux / plateformes", type: "number" },
-      { label: "État peinture / corrosion", type: "select", options: OK_NOK_NA, required: true },
-      { label: "État des échelons / anti-chute (safety climb)", type: "select", options: OK_NOK_NA, required: true },
-      { label: "Éclairage aviation fonctionnel", type: "select", options: YES_NO, required: true },
-      { label: "Mise à la terre / paratonnerre — continuité vérifiée", type: "select", options: OK_NOK_NA },
-      { label: "Fondation — fissures ou affaissement visible", type: "select", options: YES_NO },
-      { label: "Photo générale du pylône", type: "photo", required: true },
+      { label: "IHS Site ID", type: "text", required: true },
+      { label: "Site Name", type: "text", required: true },
+      { label: "Site ID / Reference", type: "text", required: true },
+      { label: "Region / State", type: "text", required: true },
+      { label: "SBC / Vendor", type: "text", required: true },
+      { label: "Audit Date", type: "date", required: true },
+      { label: "Auditor Name(s)", type: "text", required: true },
+      { label: "Number of Tenants", type: "number", required: true },
     ],
   },
   {
-    title: "BBU (Baseband Unit)",
-    icon: "server",
+    title: "Generator – Main Data",
+    icon: "zap",
     questions: [
-      { label: "Modèle BBU", type: "text", required: true },
-      { label: "Nombre de BBU installées", type: "number" },
-      { label: "Statut BBU", type: "select", options: ["Actif", "En panne", "Standby"], required: true },
-      { label: "Alarmes actives sur BBU", type: "select", options: YES_NO },
-      { label: "Détail des alarmes (si applicable)", type: "text" },
-      { label: "Version logiciel", type: "text" },
-      { label: "Photo BBU / cabinet ouvert", type: "photo", required: true },
+      { label: "Generator 1 – Type", type: "select", options: ["Diesel", "Gas", "Solar", "Hybrid", "Other"], required: true },
+      { label: "Generator 1 – Brand / Make", type: "text", required: true },
+      { label: "Generator 1 – Capacity", type: "number", unit: "kVA", required: true },
+      { label: "Generator 1 – Rated Power Factor", type: "number", unit: "PF", required: true },
+      { label: "Generator 1 – Running Hours", type: "number", unit: "h", required: true },
+      { label: "Generator 1 – Condition", type: "select", options: GOOD_FAIR_POOR_NA, required: true },
+      { label: "Generator 1 – Current Load", type: "number", unit: "A", required: true },
+      { label: "Generator 1 – Measured/Estimated Load", type: "select", options: ["Measured", "Estimated"], required: true },
+      { label: "Generator 2 – Type", type: "text", required: true },
+      { label: "Generator 2 – Brand / Make", type: "text", required: true },
+      { label: "Generator 2 – Capacity", type: "number", unit: "kVA", required: true },
+      { label: "Generator 2 – Rated Power Factor", type: "number", unit: "PF", required: true },
+      { label: "Generator 2 – Running Hours", type: "number", unit: "h", required: true },
+      { label: "Generator 2 – Condition", type: "select", options: GOOD_FAIR_POOR_NA, required: true },
     ],
   },
   {
-    title: "Radios (RRU / AAU)",
-    icon: "radio",
+    title: "Site Load Calculation",
+    icon: "calculator",
     questions: [
-      { label: "Nombre de radios par secteur", type: "number" },
-      { label: "Modèle radio (RRU/RRH/AAU)", type: "text" },
-      { label: "Bande(s) de fréquence", type: "multiselect", options: ["900 MHz", "1800 MHz", "2100 MHz", "2600 MHz", "3500 MHz"] },
-      { label: "Technologie", type: "multiselect", options: ["2G", "3G", "4G", "5G"] },
-      { label: "État fixation / câblage / étanchéité", type: "select", options: OK_NOK_NA, required: true },
-      { label: "Photo radios par secteur", type: "photo", required: true },
+      { label: "Measured Site Load", type: "number", unit: "kW", required: true },
+      { label: "Generator Rated Capacity", type: "number", unit: "kVA", required: true },
+      { label: "Generator Power Factor Used", type: "number", unit: "PF", required: true },
+      { label: "Generator Rated Power", type: "number", unit: "kW", required: true },
+      { label: "Generator Utilization / Loading", type: "number", unit: "%", required: true },
+      { label: "Site Load Source", type: "select", options: ["Controller", "Meter", "Calculation"], required: true },
+      { label: "Site Categorization", type: "text", required: true },
+      { label: "Load Comments", type: "text", required: true },
     ],
   },
   {
-    title: "Cabinets & Alimentation",
-    icon: "battery",
+    title: "Rectifier / DC Power",
+    icon: "cpu",
     questions: [
-      { label: "Type de cabinet", type: "select", options: ["Indoor", "Outdoor"] },
-      { label: "État physique du cabinet (portes, joints, ventilation)", type: "select", options: OK_NOK_NA, required: true },
-      { label: "Rectifieur — modules actifs / en panne", type: "text" },
-      { label: "Batteries — état de santé général", type: "select", options: OK_NOK_NA, required: true },
-      { label: "Âge des batteries (années)", type: "number", unit: "ans" },
-      { label: "Générateur présent", type: "select", options: YES_NO },
-      { label: "Niveau carburant générateur (%)", type: "number", unit: "%" },
-      { label: "Source secteur (ENEO) disponible", type: "select", options: YES_NO },
-      { label: "Climatisation / free cooling fonctionnel", type: "select", options: OK_NOK_NA },
-      { label: "Photo compteur générateur / carburant", type: "photo" },
+      { label: "Rectifier Brand / Make", type: "text", required: true },
+      { label: "Module Rating", type: "number", unit: "kW", required: true },
+      { label: "Number of Slots Available", type: "number", required: true },
+      { label: "Number of Slots Used", type: "number", required: true },
+      { label: "Rectifier Rated Capacity", type: "number", unit: "kW", required: true },
+      { label: "Rectifier Used Power", type: "number", unit: "kW", required: true },
+      { label: "Extra DC-DC / AC-DC Slot Available", type: "select", options: YES_NO_NA, required: true },
+      { label: "Upgrade Recommendation", type: "text", required: true },
     ],
   },
   {
-    title: "Sécurité & Environnement",
-    icon: "shield",
+    title: "Battery",
+    icon: "battery-charging",
     questions: [
-      { label: "Clôture / enceinte en bon état", type: "select", options: OK_NOK_NA },
-      { label: "Gardiennage présent", type: "select", options: YES_NO },
-      { label: "Extincteur présent et valide", type: "select", options: OK_NOK_NA },
-      { label: "Signalisation danger / radiations visible", type: "select", options: YES_NO },
-      { label: "Commentaires / anomalies constatées", type: "text" },
+      { label: "Battery Type", type: "text", required: true },
+      { label: "Battery Brand / Make", type: "text", required: true },
+      { label: "Number of Battery Blocks", type: "number", required: true },
+      { label: "Capacity per Block", type: "number", unit: "Ah", required: true },
+      { label: "Total Installed Capacity", type: "number", unit: "Ah", required: true },
+      { label: "Battery Autonomy", type: "number", unit: "h", required: true },
+      { label: "Charging Coefficient", type: "number", required: true },
+      { label: "Battery Condition", type: "select", options: GOOD_FAIR_POOR_NA, required: true },
+      { label: "Upgrade Recommendation", type: "text", required: true },
     ],
+  },
+  {
+    title: "Solar",
+    icon: "sun",
+    questions: [
+      { label: "PV Available", type: "select", options: YES_NO_NA, required: true },
+      { label: "PV Brand / Make", type: "text", required: true },
+      { label: "PV Quantity", type: "number", required: true },
+      { label: "PV Module Capacity", type: "number", unit: "Wp", required: true },
+      { label: "Total Installed PV Capacity", type: "number", unit: "kWp", required: true },
+      { label: "Solar Charger Brand / Make", type: "text", required: true },
+      { label: "Solar Charger Current", type: "number", unit: "A", required: true },
+      { label: "Solar Charger Voltage", type: "number", unit: "V", required: true },
+      { label: "Solar Panel Condition", type: "select", options: GOOD_FAIR_POOR_NA, required: true },
+      { label: "Recommended PV Size", type: "number", unit: "kWp", required: true },
+      { label: "Recommended Battery Addition", type: "text", unit: "kWh / Ah", required: true },
+      { label: "Solar Feasibility Rating", type: "select", options: ["High", "Medium", "Low", "Not Feasible"], required: true },
+      { label: "Solar Comments", type: "text", required: true },
+    ],
+  },
+  {
+    title: "Functional Checks & Photos",
+    icon: "camera",
+    questions: [
+      { label: "Mains–DG–Battery Changeover", type: "select", options: PASS_FAIL_NA, required: true },
+      { label: "Alarm Reporting to NOC", type: "select", options: PASS_FAIL_NA, required: true },
+      { label: "Earthing / Lightning Protection", type: "select", options: PASS_FAIL_NA, required: true },
+      { label: "DC / AC Distribution Board", type: "select", options: GOOD_FAIR_POOR_NA, required: true },
+      { label: "Overall Power Chain", type: "select", options: ["Functional", "Partial", "Non-Functional", "N/A"], required: true },
+      { label: "Before/After Photos Captured", type: "select", options: YES_NO_NA, required: true },
+      { label: "Open Follow-Up Item", type: "select", options: YES_NO_NA, required: true },
+      { label: "Follow-Up Comments", type: "text", required: true },
+    ],
+  },
+];
+
+// ============================================================================
+// FORM 2 : SITE INFRASTRUCTURE AUDIT (feuille 02_Site_Infra)
+// ============================================================================
+const SITE_INFRA_SECTIONS = [
+  {
+    title: "Site Identification",
+    icon: "map-pin",
+    questions: [
+      { label: "IHS Site ID", type: "text", required: true },
+      { label: "Site Name", type: "text", required: true },
+      { label: "Region / State", type: "text", required: true },
+      { label: "SBC / Vendor", type: "text", required: true },
+      { label: "Audit Date", type: "date", required: true },
+      { label: "Auditor Name(s)", type: "text", required: true },
+    ],
+  },
+  {
+    title: "Shelter / Cooling",
+    icon: "home",
+    questions: [
+      { label: "Number of Shelters", type: "number", required: true },
+      { label: "Shelter Type", type: "text", required: true },
+      { label: "Shelter Condition", type: "select", options: GOOD_FAIR_POOR_NA, required: true },
+      { label: "Number of AC Units", type: "number", required: true },
+      { label: "AC Capacity", type: "number", unit: "HP", required: true },
+      { label: "AC Type", type: "text", required: true },
+      { label: "Cooling Unit Brand / Make", type: "text", required: true },
+      { label: "Cooling Unit Condition", type: "select", options: GOOD_FAIR_POOR_NA, required: true },
+      { label: "Shelter Temperature", type: "number", unit: "°C", required: true },
+      { label: "Heat Extractor", type: "select", options: YES_NO_NA, required: true },
+      { label: "Cooling Upgrade Recommendation", type: "text", required: true },
+    ],
+  },
+  {
+    title: "ATS / Diesel Tank",
+    icon: "fuel",
+    questions: [
+      { label: "ATS Available", type: "select", options: YES_NO_NA, required: true },
+      { label: "ATS Capacity", type: "number", required: true },
+      { label: "ATS Brand / Make", type: "text", required: true },
+      { label: "ATS Condition", type: "select", options: GOOD_FAIR_POOR_NA, required: true },
+      { label: "Diesel Tank Capacity", type: "number", unit: "Litres", required: true },
+      { label: "Tank Type", type: "text", required: true },
+      { label: "Tank Shape", type: "text", required: true },
+      { label: "Tank Condition", type: "select", options: GOOD_FAIR_POOR_NA, required: true },
+      { label: "Water Separator Available", type: "select", options: YES_NO_NA, required: true },
+      { label: "Water Separator Condition", type: "select", options: GOOD_FAIR_POOR_NA, required: true },
+    ],
+  },
+  {
+    title: "Grid / Gas / Generator Feasibility",
+    icon: "lightbulb",
+    questions: [
+      { label: "Grid Connected", type: "select", options: YES_NO_NA, required: true },
+      { label: "Grid Connection Type", type: "text", required: true },
+      { label: "Pipeline Owner", type: "text", required: true },
+      { label: "Pipeline Accessibility", type: "select", options: ["Accessible", "Not Accessible"], required: true },
+      { label: "Gas Pressure Available", type: "select", options: YES_NO_NA, required: true },
+      { label: "Gas Type", type: "text", required: true },
+      { label: "Generator Type", type: "text", required: true },
+      { label: "Existing Generator Capacity", type: "number", unit: "kVA", required: true },
+      { label: "Gas Generator Feasible", type: "select", options: YES_NO_NA, required: true },
+      { label: "Infrastructure Requirements", type: "text", required: true },
+      { label: "Safety Constraints", type: "text", required: true },
+      { label: "Regulatory Constraints", type: "text", required: true },
+      { label: "Overall Feasibility Rating", type: "text", required: true },
+      { label: "Comments", type: "text", required: true },
+    ],
+  },
+  {
+    title: "Site Space / Solar Feasibility",
+    icon: "maximize",
+    questions: [
+      { label: "Available Space for Solar", type: "select", options: YES_NO_NA, required: true },
+      { label: "Space Type", type: "select", options: ["Roof", "Ground", "Tower Compound"], required: true },
+      { label: "Shading Assessment", type: "select", options: ["None", "Partial", "Significant"], required: true },
+      { label: "Structural Load Suitability", type: "select", options: ["Suitable", "Review Required", "Not Suitable"], required: true },
+      { label: "Existing Load Profile Reviewed", type: "select", options: YES_NO_NA, required: true },
+      { label: "Recommended PV Size", type: "number", unit: "kWp", required: true },
+      { label: "Recommended Battery Addition", type: "text", unit: "kWh / Ah", required: true },
+      { label: "Estimated DG Run-Hour Reduction", type: "number", unit: "%", required: true },
+      { label: "Overall Solar Rating", type: "select", options: ["High", "Medium", "Low", "Not Feasible"], required: true },
+      { label: "Solar Comments", type: "text", required: true },
+    ],
+  },
+  {
+    title: "Minor Fix / Closure",
+    icon: "tool",
+    questions: [
+      { label: "Breaker / MCB Fault Identified", type: "select", options: YES_NO_NA, required: true },
+      { label: "Replacement Required", type: "select", options: YES_NO_NA, required: true },
+      { label: "Free-Issued by IHS", type: "select", options: YES_NO_NA, required: true },
+      { label: "Replacement Completed", type: "select", options: YES_NO_NA, required: true },
+      { label: "Rectifier Module Fault Identified", type: "select", options: YES_NO_NA, required: true },
+      { label: "Rectifier Replacement Required", type: "select", options: YES_NO_NA, required: true },
+      { label: "Rectifier Free-Issued by IHS", type: "select", options: YES_NO_NA, required: true },
+      { label: "Rectifier Replacement Completed", type: "select", options: YES_NO_NA, required: true },
+      { label: "Other Minor Fix Description", type: "text", required: true },
+      { label: "Free-Issue Material Required", type: "select", options: YES_NO_NA, required: true },
+      { label: "Other Fix Completed", type: "select", options: YES_NO_NA, required: true },
+      { label: "Date Completed", type: "date", required: true },
+      { label: "Before / After Photos", type: "select", options: YES_NO_NA, required: true },
+      { label: "Open Follow-Up Required", type: "select", options: YES_NO_NA, required: true },
+      { label: "Follow-Up Comments", type: "text", required: true },
+    ],
+  },
+];
+
+const TEMPLATES = [
+  {
+    name: "IHS Power & Energy Audit",
+    category: "Power Audit",
+    sections: POWER_AUDIT_SECTIONS,
+  },
+  {
+    name: "IHS Site Infrastructure Audit",
+    category: "Site Infrastructure",
+    sections: SITE_INFRA_SECTIONS,
   },
 ];
 
@@ -121,59 +288,80 @@ async function seed() {
       console.log("ℹ️  Compte admin déjà existant.");
     }
 
-    // 3. Template "Audit Pylône Standard"
-    const { rows: existingTemplate } = await client.query(
-      `SELECT id FROM survey_templates WHERE org_id = $1 AND name = 'Audit Pylône Standard' LIMIT 1`,
+    // 3. Nettoyage des anciens templates IHS (catégories Power Audit & Site Infrastructure)
+    const { rows: existingTemplates } = await client.query(
+      `SELECT id FROM survey_templates WHERE org_id = $1 AND category IN ('Power Audit', 'Site Infrastructure', 'Tower Audit')`,
       [orgId]
     );
 
-    if (existingTemplate.length > 0) {
-      console.log("ℹ️  Template 'Audit Pylône Standard' déjà existant — seed ignoré (supprime-le en DB pour ré-exécuter).");
-      await client.query("COMMIT");
-      return;
+    if (existingTemplates.length > 0) {
+      const ids = existingTemplates.map((t) => t.id);
+      const sectionIds = await client.query(`SELECT id FROM survey_sections WHERE template_id = ANY($1::uuid[])`, [ids]).then(r => r.rows.map(s => s.id));
+      const responseIds = await client.query(`SELECT id FROM survey_responses WHERE template_id = ANY($1::uuid[])`, [ids]).then(r => r.rows.map(r => r.id));
+      const questionIds = sectionIds.length > 0 ? await client.query(`SELECT id FROM survey_questions WHERE section_id = ANY($1::uuid[])`, [sectionIds]).then(r => r.rows.map(q => q.id)) : [];
+
+      if (responseIds.length > 0) {
+        await client.query(`DELETE FROM media_attachments WHERE response_id = ANY($1::uuid[])`, [responseIds]);
+        await client.query(`DELETE FROM response_answers WHERE response_id = ANY($1::uuid[])`, [responseIds]);
+      }
+      if (questionIds.length > 0) {
+        await client.query(`DELETE FROM response_answers WHERE question_id = ANY($1::uuid[])`, [questionIds]);
+      }
+      if (responseIds.length > 0) {
+        await client.query(`DELETE FROM survey_responses WHERE id = ANY($1::uuid[])`, [responseIds]);
+      }
+      if (questionIds.length > 0) {
+        await client.query(`DELETE FROM survey_questions WHERE id = ANY($1::uuid[])`, [questionIds]);
+      }
+      await client.query(`DELETE FROM survey_sections WHERE template_id = ANY($1::uuid[])`, [ids]);
+      await client.query(`DELETE FROM survey_templates WHERE id = ANY($1::uuid[])`, [ids]);
+      console.log(`ℹ️  ${existingTemplates.length} ancien(s) template(s) supprimé(s) — recréation en cours.`);
     }
 
     const { rows: adminRow } = await client.query(
       `SELECT id FROM users WHERE matricule = 'ADMIN001' LIMIT 1`
     );
 
-    const { rows: templateRows } = await client.query(
-      `INSERT INTO survey_templates (org_id, name, category, version, created_by)
-       VALUES ($1, 'Audit Pylône Standard', 'Tower Audit', 1, $2)
-       RETURNING id`,
-      [orgId, adminRow[0].id]
-    );
-    const templateId = templateRows[0].id;
-    console.log("✅ Template créé:", templateId);
-
-    let sectionOrder = 0;
-    for (const section of SECTIONS) {
-      const { rows: sectionRows } = await client.query(
-        `INSERT INTO survey_sections (template_id, title, order_index, icon)
-         VALUES ($1, $2, $3, $4)
+    // 4. Création des deux templates
+    for (const tpl of TEMPLATES) {
+      const { rows: templateRows } = await client.query(
+        `INSERT INTO survey_templates (org_id, name, category, version, created_by)
+         VALUES ($1, $2, $3, 1, $4)
          RETURNING id`,
-        [templateId, section.title, sectionOrder++, section.icon]
+        [orgId, tpl.name, tpl.category, adminRow[0].id]
       );
-      const sectionId = sectionRows[0].id;
+      const templateId = templateRows[0].id;
+      console.log(`✅ Template créé: ${tpl.name} (${tpl.category}) — ${templateId}`);
 
-      let questionOrder = 0;
-      for (const q of section.questions) {
-        await client.query(
-          `INSERT INTO survey_questions
-             (section_id, label, question_type, options, unit, is_required, order_index)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [
-            sectionId,
-            q.label,
-            q.type,
-            q.options ? JSON.stringify(q.options) : null,
-            q.unit || null,
-            !!q.required,
-            questionOrder++,
-          ]
+      let sectionOrder = 0;
+      for (const section of tpl.sections) {
+        const { rows: sectionRows } = await client.query(
+          `INSERT INTO survey_sections (template_id, title, order_index, icon)
+           VALUES ($1, $2, $3, $4)
+           RETURNING id`,
+          [templateId, section.title, sectionOrder++, section.icon]
         );
+        const sectionId = sectionRows[0].id;
+
+        let questionOrder = 0;
+        for (const q of section.questions) {
+          await client.query(
+            `INSERT INTO survey_questions
+               (section_id, label, question_type, options, unit, is_required, order_index)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [
+              sectionId,
+              q.label,
+              q.type,
+              q.options ? JSON.stringify(q.options) : null,
+              q.unit || null,
+              !!q.required,
+              questionOrder++,
+            ]
+          );
+        }
+        console.log(`   ↳ Section "${section.title}" : ${section.questions.length} questions insérées`);
       }
-      console.log(`   ↳ Section "${section.title}" : ${section.questions.length} questions insérées`);
     }
 
     await client.query("COMMIT");

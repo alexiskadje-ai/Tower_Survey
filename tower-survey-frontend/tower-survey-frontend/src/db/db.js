@@ -16,4 +16,10 @@ db.version(1).stores({
   queuedMedia: "++localId, response_client_uuid, question_id, status",
 });
 
+// v2 : ajout d'un index sur template_id pour permettre la reprise d'un brouillon
+// spécifique à un type de formulaire (Power Audit vs Site Infrastructure)
+db.version(2).stores({
+  draftResponses: "client_uuid, site_id, status, submitted_at, template_id",
+});
+
 export default db;

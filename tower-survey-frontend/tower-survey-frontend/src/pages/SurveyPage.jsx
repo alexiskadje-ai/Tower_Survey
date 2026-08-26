@@ -1,12 +1,29 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Zap, Building2 } from "lucide-react";
 import { db } from "../db/db";
+import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useSync } from "../context/SyncContext";
 import TopBar from "../components/TopBar";
 import TowerRail from "../components/TowerRail";
 import QuestionField from "../components/QuestionField";
 import "./SurveyPage.css";
+
+const FORM_META = {
+  power: {
+    label: "Power & Energy Audit",
+    short: "Power Audit",
+    icon: Zap,
+    accent: "#f59e0b",
+  },
+  infra: {
+    label: "Site Infrastructure Audit",
+    short: "Site Infrastructure",
+    icon: Building2,
+    accent: "#3b82f6",
+  },
+};
 
 function newDeviceId() {
   let id = localStorage.getItem("ti_device_id");
@@ -18,7 +35,7 @@ function newDeviceId() {
 }
 
 export default function SurveyPage() {
-  const { siteId } = useParams();
+  const { siteId, type } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { runSync } = useSync();
@@ -33,22 +50,63 @@ export default function SurveyPage() {
   const [submitState, setSubmitState] = useState("idle"); // idle | saving | done
   const gpsRef = useRef(null);
 
+  // Map URL param -> template category
+  const targetCategory = type === "power"
+    ? "Power Audit"
+    : type === "infra"
+    ? "Site Infrastructure"
+    : null;
+
   // ---- Chargement initial : site, template actif, reprise éventuelle d'un brouillon ----
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
-      const [siteRow, templates] = await Promise.all([
-        db.cachedSites.get(siteId),
-        db.cachedTemplates.toArray(),
-      ]);
-      const tpl = templates.find((t) => t.category === "Tower Audit") || templates[0];
+      let siteRow = null;
+      let templates = [];
+      let useCache = true;
 
-      // Reprend un brouillon existant non encore soumis pour ce site
-      const existingDraft = await db.draftResponses
-        .where({ site_id: siteId })
-        .and((r) => r.status === "draft")
-        .first();
+      if (navigator.onLine) {
+        try {
+          const [{ sites: freshSites }, { templates: freshTemplates }] = await Promise.all([
+            api.getSites(),
+            api.getActiveTemplates(),
+          ]);
+
+          await db.cachedSites.clear();
+          await db.cachedSites.bulkPut(freshSites);
+          await db.cachedTemplates.clear();
+          for (const tpl of freshTemplates) {
+            await db.cachedTemplates.put(tpl);
+          }
+
+          siteRow = freshSites.find((s) => s.id === siteId) || null;
+          templates = freshTemplates;
+          useCache = false;
+        } catch {
+          useCache = true;
+        }
+      }
+
+      if (useCache) {
+        [siteRow, templates] = await Promise.all([
+          db.cachedSites.get(siteId),
+          db.cachedTemplates.toArray(),
+        ]);
+      }
+
+      // Choisit le bon template selon la catégorie ciblée (ou fallback)
+      const tpl = targetCategory
+        ? templates.find((t) => t.category === targetCategory) || templates[0]
+        : templates[0];
+
+      // Reprend un brouillon existant non encore soumis pour ce site + ce template
+      const existingDraft = tpl
+        ? await db.draftResponses
+            .where({ site_id: siteId, template_id: tpl.id })
+            .and((r) => r.status === "draft")
+            .first()
+        : null;
 
       let activeDraft = existingDraft;
       if (!activeDraft && tpl) {
@@ -94,7 +152,8 @@ export default function SurveyPage() {
     }
 
     return () => { cancelled = true; };
-  }, [siteId, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [siteId, type]);
 
   const sections = template?.sections || [];
   const currentSection = sections[sectionIndex];
@@ -199,6 +258,35 @@ export default function SurveyPage() {
   return (
     <div className="app-shell">
       <TopBar />
+
+      {type && FORM_META[type] && (
+        <div
+          className="survey-page__form-banner"
+          style={{ "--accent": FORM_META[type].accent }}
+        >
+          {(() => {
+            const Icon = FORM_META[type].icon;
+            return (
+              <>
+                <div className="survey-page__form-banner-icon">
+                  <Icon size={18} />
+                </div>
+                <div className="survey-page__form-banner-text">
+                  <span className="survey-page__form-banner-label">Formulaire actif</span>
+                  <span className="survey-page__form-banner-title">{FORM_META[type].label}</span>
+                </div>
+                <button
+                  type="button"
+                  className="survey-page__form-banner-switch"
+                  onClick={() => navigate("/sites")}
+                >
+                  Changer
+                </button>
+              </>
+            );
+          })()}
+        </div>
+      )}
 
       <div className="survey-page__site">
         <span className="mono survey-page__site-code">{site?.site_code || "—"}</span>

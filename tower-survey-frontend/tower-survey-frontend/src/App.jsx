@@ -38,7 +38,7 @@ export default function App() {
               }
             />
             <Route
-              path="/survey/:siteId"
+              path="/survey/:siteId/:type"
               element={
                 <ProtectedRoute>
                   <SurveyPage />

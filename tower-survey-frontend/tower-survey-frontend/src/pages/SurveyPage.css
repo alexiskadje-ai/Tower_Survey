@@ -6,6 +6,77 @@
   line-height: 1.5;
 }
 
+/* --- Form-type banner (active form indicator) --- */
+.survey-page__form-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: color-mix(in srgb, var(--accent, var(--teal-600)) 8%, var(--white));
+  border-bottom: 1px solid color-mix(in srgb, var(--accent, var(--teal-600)) 25%, var(--border));
+  border-left: 4px solid var(--accent, var(--teal-600));
+}
+
+.survey-page__form-banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent, var(--teal-600)) 15%, var(--white));
+  color: var(--accent, var(--teal-700));
+}
+
+.survey-page__form-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.survey-page__form-banner-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--charcoal-400);
+  line-height: 1.2;
+}
+
+.survey-page__form-banner-title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--charcoal-900);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.survey-page__form-banner-switch {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--charcoal-600);
+  cursor: pointer;
+  min-height: auto;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.survey-page__form-banner-switch:hover {
+  background: var(--teal-050);
+  color: var(--teal-700);
+  border-color: var(--teal-600);
+}
+
 .survey-page__site {
   display: flex;
   align-items: baseline;

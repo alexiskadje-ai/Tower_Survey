@@ -5,8 +5,13 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const raw = localStorage.getItem("ti_user");
-    return raw ? JSON.parse(raw) : null;
+    try {
+      const raw = localStorage.getItem("ti_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      localStorage.removeItem("ti_user");
+      return null;
+    }
   });
 
   const login = useCallback(async (matricule, password) => {

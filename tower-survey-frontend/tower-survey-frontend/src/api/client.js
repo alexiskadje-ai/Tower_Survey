@@ -4,7 +4,7 @@ function getToken() {
   return localStorage.getItem("ti_token");
 }
 
-async function request(path, { method = "GET", body, isForm = false } = {}) {
+async function request(path, { method = "GET", body, isForm = false, raw = false } = {}) {
   const headers = {};
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -16,19 +16,25 @@ async function request(path, { method = "GET", body, isForm = false } = {}) {
     body: isForm ? body : body ? JSON.stringify(body) : undefined,
   });
 
-  let data = null;
-  try {
-    data = await res.json();
-  } catch {
-    // réponse vide (ex: 204)
-  }
-
   if (!res.ok) {
+    let data = null;
+    try {
+      data = await res.json();
+    } catch {
+      // réponse vide ou non-JSON
+    }
     const err = new Error(data?.error || `Erreur réseau (${res.status})`);
     err.status = res.status;
     throw err;
   }
-  return data;
+
+  if (raw) return res;
+
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
 }
 
 export const api = {
@@ -60,9 +66,28 @@ export const api = {
     return request(`/admin/responses${qs ? `?${qs}` : ""}`);
   },
   adminResponseDetail: (id) => request(`/admin/responses/${id}`),
-  adminExportCsv: () => request("/admin/responses/export/csv"),
-  adminExportExcel: () => request("/admin/responses/export/excel"),
+  adminExportCsv: (filters = {}) => {
+    const qs = new URLSearchParams(filters).toString();
+    return request(`/admin/responses/export/csv${qs ? `?${qs}` : ""}`, { raw: true }).then((res) => handleDownload(res, "csv"));
+  },
+  adminExportExcel: (filters = {}) => {
+    const qs = new URLSearchParams(filters).toString();
+    return request(`/admin/responses/export/excel${qs ? `?${qs}` : ""}`, { raw: true }).then((res) => handleDownload(res, "xlsx"));
+  },
   adminEmailExport: (body) => request("/admin/responses/email", { method: "POST", body }),
 };
+
+async function handleDownload(res, ext) {
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `audit-responses-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.${ext}`;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+  return { success: true };
+}
 
 export { getToken };
