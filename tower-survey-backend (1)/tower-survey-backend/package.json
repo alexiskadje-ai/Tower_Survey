@@ -9,7 +9,8 @@
     "dev": "nodemon src/server.js",
     "db:init": "node src/db/init.js",
     "db:seed": "node src/db/seed/audit-pylone-template.js",
-    "db:seed:ihs": "node src/db/seed/import-ihs-sites.js"
+    "db:seed:ihs": "node src/db/seed/import-ihs-sites.js",
+    "photos:apply-tiers": "node src/db/seed/apply-photo-tiers.js"
   },
   "dependencies": {
     "axios": "^1.19.0",

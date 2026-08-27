@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Zap, Building2 } from "lucide-react";
+import { Zap, Building2, AlertTriangle } from "lucide-react";
 import { db } from "../db/db";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -8,6 +8,8 @@ import { useSync } from "../context/SyncContext";
 import TopBar from "../components/TopBar";
 import TowerRail from "../components/TowerRail";
 import QuestionField from "../components/QuestionField";
+import SiteSearch from "../components/SiteSearch";
+import { getPhotoRequirements } from "../utils/photoRequirements";
 import "./SurveyPage.css";
 
 const FORM_META = {
@@ -35,7 +37,7 @@ function newDeviceId() {
 }
 
 export default function SurveyPage() {
-  const { siteId, type } = useParams();
+  const { type } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { runSync } = useSync();
@@ -48,6 +50,8 @@ export default function SurveyPage() {
   const [sectionIndex, setSectionIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitState, setSubmitState] = useState("idle"); // idle | saving | done
+  const [navError, setNavError] = useState(null); // { message, photoId? }
+  const [highlightedPhotoId, setHighlightedPhotoId] = useState(null);
   const gpsRef = useRef(null);
 
   // Map URL param -> template category
@@ -57,12 +61,11 @@ export default function SurveyPage() {
     ? "Site Infrastructure"
     : null;
 
-  // ---- Chargement initial : site, template actif, reprise éventuelle d'un brouillon ----
+  // ---- Chargement initial : template + sites (pour la recherche), reprise éventuelle d'un brouillon ----
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
-      let siteRow = null;
       let templates = [];
       let useCache = true;
 
@@ -80,7 +83,6 @@ export default function SurveyPage() {
             await db.cachedTemplates.put(tpl);
           }
 
-          siteRow = freshSites.find((s) => s.id === siteId) || null;
           templates = freshTemplates;
           useCache = false;
         } catch {
@@ -89,10 +91,7 @@ export default function SurveyPage() {
       }
 
       if (useCache) {
-        [siteRow, templates] = await Promise.all([
-          db.cachedSites.get(siteId),
-          db.cachedTemplates.toArray(),
-        ]);
+        templates = await db.cachedTemplates.toArray();
       }
 
       // Choisit le bon template selon la catégorie ciblée (ou fallback)
@@ -100,20 +99,35 @@ export default function SurveyPage() {
         ? templates.find((t) => t.category === targetCategory) || templates[0]
         : templates[0];
 
-      // Reprend un brouillon existant non encore soumis pour ce site + ce template
+      // Pour les brouillons existants, on cherche le plus récent
+      // pour ce template, peu importe le site (l'utilisateur a peut-être changé)
       const existingDraft = tpl
         ? await db.draftResponses
-            .where({ site_id: siteId, template_id: tpl.id })
+            .where({ template_id: tpl.id })
             .and((r) => r.status === "draft")
-            .first()
+            .reverse()
+            .sortBy("started_at")
+            .then((rows) => rows[0] || null)
         : null;
+
+      // Si on a un brouillon existant, on charge le site correspondant
+      let resumedSite = null;
+      if (existingDraft?.site_id) {
+        try {
+          const allSites = await db.cachedSites.toArray();
+          resumedSite = allSites.find((s) => s.id === existingDraft.site_id) || null;
+        } catch {
+          resumedSite = null;
+        }
+      }
 
       let activeDraft = existingDraft;
       if (!activeDraft && tpl) {
+        // Pas de brouillon — on en crée un, mais sans site_id (sera défini via SiteSearch)
         activeDraft = {
           client_uuid: crypto.randomUUID(),
           template_id: tpl.id,
-          site_id: siteId,
+          site_id: null,
           technician_id: user?.id,
           device_id: newDeviceId(),
           started_at: new Date().toISOString(),
@@ -128,9 +142,9 @@ export default function SurveyPage() {
       }
 
       if (cancelled) return;
-      setSite(siteRow || null);
       setTemplate(tpl || null);
       setDraft(activeDraft || null);
+      setSite(resumedSite);
 
       const answerMap = {};
       (activeDraft?.answers || []).forEach((a) => {
@@ -153,7 +167,7 @@ export default function SurveyPage() {
 
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [siteId, type]);
+  }, [type]);
 
   const sections = template?.sections || [];
   const currentSection = sections[sectionIndex];
@@ -195,6 +209,71 @@ export default function SurveyPage() {
     });
   }
 
+  /**
+   * Mappe les labels de questions (selon le template) à leurs clés fonctionnelles.
+   * Permet de retrouver une question par son libellé (insensible à la casse / accents).
+   */
+  const QUESTION_KEYS = useMemo(() => {
+    const map = {};
+    sections.forEach((sec) => {
+      sec.questions.forEach((q) => {
+        const norm = (q.label || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        if (norm.includes("ihs site id") || norm === "ihs id") map.ihsId = q.id;
+        else if (norm.includes("operator site id") || (norm.includes("site id") && norm.includes("reference"))) map.operatorSiteId = q.id;
+        else if (norm === "site name" || norm.startsWith("site name")) map.siteName = q.id;
+        else if (norm === "site id / reference" || norm === "site id/reference") map.siteIdRef = q.id;
+        else if (norm.startsWith("region") || norm === "state") map.region = q.id;
+      });
+    });
+    return map;
+  }, [sections]);
+
+  /**
+   * Auto-remplit les champs d'identification du site à partir d'un site sélectionné
+   * dans la barre de recherche, et met à jour le draft avec le site_id.
+   * Laisse toujours l'utilisateur remplir :
+   *   - Audit Date
+   *   - Auditor Name(s)
+   *   - SBC / Vendor
+   *   - Number of Tenants
+   */
+  async function handleSiteSelected(pickedSite) {
+    if (!pickedSite) {
+      // L'utilisateur a effacé la sélection — on efface les champs auto-remplis
+      setAnswers((prev) => {
+        const next = { ...prev };
+        if (QUESTION_KEYS.ihsId) delete next[QUESTION_KEYS.ihsId];
+        if (QUESTION_KEYS.operatorSiteId) delete next[QUESTION_KEYS.operatorSiteId];
+        if (QUESTION_KEYS.siteName) delete next[QUESTION_KEYS.siteName];
+        if (QUESTION_KEYS.siteIdRef) delete next[QUESTION_KEYS.siteIdRef];
+        if (QUESTION_KEYS.region) delete next[QUESTION_KEYS.region];
+        persistDraft(next);
+        return next;
+      });
+      setSite(null);
+      if (draft) {
+        await db.draftResponses.update(draft.client_uuid, { site_id: null });
+      }
+      return;
+    }
+
+    setAnswers((prev) => {
+      const next = { ...prev };
+      if (QUESTION_KEYS.ihsId) next[QUESTION_KEYS.ihsId] = pickedSite.site_code || "";
+      if (QUESTION_KEYS.operatorSiteId) next[QUESTION_KEYS.operatorSiteId] = pickedSite.operator_site_id || "";
+      if (QUESTION_KEYS.siteName) next[QUESTION_KEYS.siteName] = pickedSite.site_name || "";
+      if (QUESTION_KEYS.siteIdRef) next[QUESTION_KEYS.siteIdRef] = pickedSite.site_code || "";
+      if (QUESTION_KEYS.region) next[QUESTION_KEYS.region] = pickedSite.region || "";
+      persistDraft(next);
+      return next;
+    });
+
+    setSite(pickedSite);
+    if (draft) {
+      await db.draftResponses.update(draft.client_uuid, { site_id: pickedSite.id });
+    }
+  }
+
   async function handleCapturePhoto(questionId, file) {
     const previewUrl = URL.createObjectURL(file);
     setPhotos((prev) => ({ ...prev, [questionId]: { previewUrl, blob: file, filename: file.name } }));
@@ -211,11 +290,92 @@ export default function SurveyPage() {
     });
   }
 
-  function goToSection(i) {
-    setSectionIndex(Math.max(0, Math.min(sections.length - 1, i)));
+  /**
+   * Vérifie que la section courante n'a aucune photo requise manquante.
+   * Retourne un objet { ok, blocking: [{ question, reason }] }.
+   */
+  const validateCurrentSectionPhotos = useCallback(() => {
+    const sec = sections[sectionIndex];
+    if (!sec) return { ok: true, blocking: [] };
+    const reqs = getPhotoRequirements(sec.questions, answers, photos);
+    const blocking = reqs.filter((r) => r.missing);
+    return { ok: blocking.length === 0, blocking };
+  }, [sections, sectionIndex, answers, photos]);
+
+  /**
+   * Tente de naviguer vers la section `targetIndex`.
+   * Si on AVANCE (vers la droite) et qu'il y a des photos manquantes dans la
+   * section courante, on bloque et on met en évidence le premier champ photo.
+   */
+  function goToSection(targetIndex) {
+    const clamped = Math.max(0, Math.min(sections.length - 1, targetIndex));
+    const goingForward = clamped > sectionIndex;
+
+    if (goingForward) {
+      const { ok, blocking } = validateCurrentSectionPhotos();
+      if (!ok) {
+        const first = blocking[0];
+        setNavError({
+          message: `Photo obligatoire : ${first.reason === "tier1"
+            ? "au moins une preuve contractuelle IHS est manquante dans cette section."
+            : "au moins une anomalie a été signalée dans cette section."}`,
+          photoId: first.question.id,
+        });
+        setHighlightedPhotoId(first.question.id);
+        // Flash puis reset après 5s pour éviter que ça reste bloqué visuellement
+        setTimeout(() => setHighlightedPhotoId(null), 5000);
+        // Scroll vers la photo bloquante
+        requestAnimationFrame(() => {
+          const el = document.querySelector(`[data-qid="${first.question.id}"]`);
+          if (el && typeof el.scrollIntoView === "function") {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        });
+        return;
+      }
+    }
+
+    setNavError(null);
+    setSectionIndex(clamped);
   }
 
   async function handleSubmit() {
+    if (!site) {
+      // L'utilisateur doit d'abord sélectionner un site
+      setSectionIndex(0);
+      setNavError({
+        message: "Veuillez d'abord sélectionner un site dans la barre de recherche de la première section.",
+      });
+      return;
+    }
+
+    // Vérifie TOUTES les sections (pas seulement la dernière) pour les photos Tier 1/2 manquantes
+    const allBlocking = [];
+    sections.forEach((sec, idx) => {
+      const reqs = getPhotoRequirements(sec.questions, answers, photos);
+      reqs.filter((r) => r.missing).forEach((r) => {
+        allBlocking.push({ ...r, sectionIndex: idx, sectionTitle: sec.title });
+      });
+    });
+    if (allBlocking.length > 0) {
+      const first = allBlocking[0];
+      setSectionIndex(first.sectionIndex);
+      setHighlightedPhotoId(first.question.id);
+      setNavError({
+        message: `${allBlocking.length} photo(s) obligatoire(s) manquante(s) — section « ${first.sectionTitle} ».`,
+        photoId: first.question.id,
+      });
+      setTimeout(() => setHighlightedPhotoId(null), 5000);
+      requestAnimationFrame(() => {
+        const el = document.querySelector(`[data-qid="${first.question.id}"]`);
+        if (el && typeof el.scrollIntoView === "function") {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      });
+      return;
+    }
+
+    setNavError(null);
     setSubmitState("saving");
 
     const coords = gpsRef.current;
@@ -289,8 +449,16 @@ export default function SurveyPage() {
       )}
 
       <div className="survey-page__site">
-        <span className="mono survey-page__site-code">{site?.site_code || "—"}</span>
-        <span className="survey-page__site-name">{site?.site_name || "Site inconnu (hors cache)"}</span>
+        {site ? (
+          <>
+            <span className="mono survey-page__site-code">{site.site_code}</span>
+            <span className="survey-page__site-name">{site.site_name}</span>
+          </>
+        ) : (
+          <span className="survey-page__site-name survey-page__site-name--muted">
+            Aucun site sélectionné — cherchez ci-dessous ↓
+          </span>
+        )}
       </div>
 
       <div className="survey-page__body">
@@ -304,16 +472,48 @@ export default function SurveyPage() {
         <div className="survey-page__form card">
           <h2 className="survey-page__section-title">{currentSection.title}</h2>
 
-          {currentSection.questions.map((q) => (
-            <QuestionField
-              key={q.id}
-              question={q}
-              value={answers[q.id]}
-              onChange={(v) => handleAnswerChange(q.id, v)}
-              photo={photos[q.id]}
-              onCapturePhoto={(file) => handleCapturePhoto(q.id, file)}
-            />
-          ))}
+          {currentSection.title === "Site Identification" && (
+            <SiteSearch onSelect={handleSiteSelected} initialValue={site} />
+          )}
+
+          {navError && (
+            <div className="survey-page__nav-error" role="alert">
+              <AlertTriangle size={18} />
+              <div>
+                <strong>Action requise :</strong> {navError.message}
+              </div>
+              <button
+                type="button"
+                className="survey-page__nav-error-close"
+                onClick={() => setNavError(null)}
+                aria-label="Fermer l'alerte"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {currentSection.questions.map((q) => {
+            const photoReq = q.question_type === "photo"
+              ? getPhotoRequirements([q], answers, photos)[0]
+              : null;
+            const required = photoReq?.required || false;
+            const reason = photoReq?.reason || "tier3";
+            return (
+              <div key={q.id} data-qid={q.id}>
+                <QuestionField
+                  question={q}
+                  value={answers[q.id]}
+                  onChange={(v) => handleAnswerChange(q.id, v)}
+                  photo={photos[q.id]}
+                  onCapturePhoto={(file) => handleCapturePhoto(q.id, file)}
+                  required={required}
+                  requiredReason={reason}
+                  highlight={highlightedPhotoId === q.id}
+                />
+              </div>
+            );
+          })}
 
           <div className="survey-page__nav">
             <button

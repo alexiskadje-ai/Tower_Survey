@@ -57,7 +57,9 @@
   --radius-lg: 18px;
   --shadow-sm: 0 1px 2px rgba(35, 36, 35, 0.06);
   --shadow-md: 0 4px 16px rgba(35, 36, 35, 0.10);
-  --shadow-card: 0 1px 3px rgba(35, 36, 35, 0.08), 0 1px 2px rgba(35, 36, 35, 0.04);
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-card-hover: 0 4px 8px rgba(15, 23, 42, 0.06), 0 16px 40px rgba(15, 23, 42, 0.12);
+  --shadow-dropdown: 0 4px 12px rgba(15, 23, 42, 0.06), 0 12px 32px rgba(15, 23, 42, 0.10);
 
   /* ---- Cible tactile min. (usage terrain / gants) ---- */
   --tap-min: 48px;

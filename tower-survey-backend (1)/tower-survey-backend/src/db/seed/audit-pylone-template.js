@@ -29,6 +29,7 @@ const POWER_AUDIT_SECTIONS = [
       { label: "Audit Date", type: "date", required: true },
       { label: "Auditor Name(s)", type: "text", required: true },
       { label: "Number of Tenants", type: "number", required: true },
+      { label: "Photo — Site identification plaque/panneau", type: "photo", required: false },
     ],
   },
   {
@@ -49,6 +50,7 @@ const POWER_AUDIT_SECTIONS = [
       { label: "Generator 2 – Rated Power Factor", type: "number", unit: "PF", required: true },
       { label: "Generator 2 – Running Hours", type: "number", unit: "h", required: true },
       { label: "Generator 2 – Condition", type: "select", options: GOOD_FAIR_POOR_NA, required: true },
+      { label: "Photo — Plaque signalétique DG 1", type: "photo", required: false },
     ],
   },
   {
@@ -63,6 +65,7 @@ const POWER_AUDIT_SECTIONS = [
       { label: "Site Load Source", type: "select", options: ["Controller", "Meter", "Calculation"], required: true },
       { label: "Site Categorization", type: "text", required: true },
       { label: "Load Comments", type: "text", required: true },
+      { label: "Photo — Compteur de charge site (kW)", type: "photo", required: false },
     ],
   },
   {
@@ -77,6 +80,7 @@ const POWER_AUDIT_SECTIONS = [
       { label: "Rectifier Used Power", type: "number", unit: "kW", required: true },
       { label: "Extra DC-DC / AC-DC Slot Available", type: "select", options: YES_NO_NA, required: true },
       { label: "Upgrade Recommendation", type: "text", required: true },
+      { label: "Photo — Rectifier et modules (face avant)", type: "photo", required: false },
     ],
   },
   {
@@ -92,6 +96,7 @@ const POWER_AUDIT_SECTIONS = [
       { label: "Charging Coefficient", type: "number", required: true },
       { label: "Battery Condition", type: "select", options: GOOD_FAIR_POOR_NA, required: true },
       { label: "Upgrade Recommendation", type: "text", required: true },
+      { label: "Photo — Batteries de secours (string)", type: "photo", required: false },
     ],
   },
   {
@@ -111,6 +116,7 @@ const POWER_AUDIT_SECTIONS = [
       { label: "Recommended Battery Addition", type: "text", unit: "kWh / Ah", required: true },
       { label: "Solar Feasibility Rating", type: "select", options: ["High", "Medium", "Low", "Not Feasible"], required: true },
       { label: "Solar Comments", type: "text", required: true },
+      { label: "Photo — Installation solaire (panneaux + onduleur)", type: "photo", required: false },
     ],
   },
   {
@@ -125,6 +131,7 @@ const POWER_AUDIT_SECTIONS = [
       { label: "Before/After Photos Captured", type: "select", options: YES_NO_NA, required: true },
       { label: "Open Follow-Up Item", type: "select", options: YES_NO_NA, required: true },
       { label: "Follow-Up Comments", type: "text", required: true },
+      { label: "Photo — ATS / Automatic Transfer Switch", type: "photo", required: false },
     ],
   },
 ];

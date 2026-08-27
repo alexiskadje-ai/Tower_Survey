@@ -15,9 +15,6 @@ async function importSites() {
     return;
   }
 
-  const headers = rows[0];
-  console.log("Headers:", headers);
-
   const dataRows = rows.slice(1).filter((r) => r && String(r[1]).trim());
 
   let inserted = 0;
@@ -65,20 +62,27 @@ async function importSites() {
       }
 
       await client.query(
-        `INSERT INTO sites (org_id, site_code, site_name, region, site_type, department, arrondissement, address_village, tower_height_m, latitude, longitude, cluster)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-         ON CONFLICT (site_code) DO UPDATE SET
-           site_name = EXCLUDED.site_name,
-           region = EXCLUDED.region,
-           site_type = EXCLUDED.site_type,
-           department = EXCLUDED.department,
-           arrondissement = EXCLUDED.arrondissement,
-           address_village = EXCLUDED.address_village,
-           tower_height_m = EXCLUDED.tower_height_m,
-           latitude = EXCLUDED.latitude,
-           longitude = EXCLUDED.longitude,
-           cluster = EXCLUDED.cluster`,
-        [orgId, siteCode, displayName, state, siteType, division, subDivision, town, null, latitude, longitude, cluster]
+        `INSERT INTO sites (
+            org_id, site_code, operator_site_id, site_name, region, site_type,
+            department, arrondissement, address_village, tower_height_m,
+            latitude, longitude, cluster, access_status
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+          ON CONFLICT (site_code) DO UPDATE SET
+            operator_site_id = EXCLUDED.operator_site_id,
+            site_name = EXCLUDED.site_name,
+            region = EXCLUDED.region,
+            site_type = EXCLUDED.site_type,
+            department = EXCLUDED.department,
+            arrondissement = EXCLUDED.arrondissement,
+            address_village = EXCLUDED.address_village,
+            tower_height_m = EXCLUDED.tower_height_m,
+            latitude = EXCLUDED.latitude,
+            longitude = EXCLUDED.longitude,
+            cluster = EXCLUDED.cluster,
+            access_status = EXCLUDED.access_status`,
+        [orgId, siteCode, operatorSiteId || null, displayName, state, siteType,
+         division, subDivision, town, null, latitude, longitude, cluster, accessStatus]
       );
 
       await client.query("COMMIT");
@@ -93,7 +97,7 @@ async function importSites() {
   }
 
   await pool.end();
-  console.log(`Import terminé: ${inserted} sites importés, ${skipped} ignorés/erreurs.`);
+  console.log(`Import terminé: ${inserted} sites importés/mis à jour, ${skipped} ignorés/erreurs.`);
 }
 
 importSites();

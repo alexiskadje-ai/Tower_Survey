@@ -1,12 +1,27 @@
 import { useRef } from "react";
+import { Camera, RefreshCw, Check, AlertTriangle, ImageOff } from "lucide-react";
 import "./QuestionField.css";
 
 /**
  * Rend le bon widget selon question.question_type.
  * `value` / `onChange` portent la valeur "brute" (texte, nombre, tableau, etc.)
  * `photo` porte { previewUrl } si une photo a déjà été prise pour cette question.
+ *
+ * Props photo additionnelles :
+ *   - required: booléen — la photo est obligatoire (Tier 1 ou Tier 2 déclenché)
+ *   - requiredReason: 'tier1' | 'tier2' | 'tier3' — affiché en badge
+ *   - highlight: booléen — pour faire pulser le champ quand la navigation le pointe
  */
-export default function QuestionField({ question, value, onChange, photo, onCapturePhoto }) {
+export default function QuestionField({
+  question,
+  value,
+  onChange,
+  photo,
+  onCapturePhoto,
+  required = false,
+  requiredReason = "tier3",
+  highlight = false,
+}) {
   const fileInputRef = useRef(null);
   const options = Array.isArray(question.options) ? question.options : [];
 
@@ -124,10 +139,23 @@ export default function QuestionField({ question, value, onChange, photo, onCapt
       );
     }
 
-    case "photo":
+    case "photo": {
+      const hasPhoto = !!photo?.previewUrl;
+      const missing = required && !hasPhoto;
+      const tierLabel = requiredReason === "tier1" ? "Preuve contractuelle IHS"
+        : requiredReason === "tier2" ? "Photo conditionnelle (anomalie détectée)"
+        : "Photo libre";
       return (
-        <div className="qfield">
-          {label}
+        <div className={`qfield ${missing ? "qfield--missing" : ""} ${highlight ? "qfield--highlight" : ""}`}>
+          <div className="qfield__label-row">
+            {label}
+            {required && (
+              <span className={`qfield__photo-tier qfield__photo-tier--${requiredReason}`}>
+                {requiredReason === "tier1" ? <AlertTriangle size={11} /> : <Camera size={11} />}
+                {tierLabel}
+              </span>
+            )}
+          </div>
           <input
             ref={fileInputRef}
             type="file"
@@ -139,22 +167,49 @@ export default function QuestionField({ question, value, onChange, photo, onCapt
               if (file) onCapturePhoto(file);
             }}
           />
-          {photo?.previewUrl ? (
-            <button type="button" className="qfield__photo-preview" onClick={() => fileInputRef.current?.click()}>
-              <img src={photo.previewUrl} alt="Photo capturée" />
-              <span className="qfield__photo-retake">Reprendre</span>
-            </button>
+          {hasPhoto ? (
+            <div className="qfield__photo-card">
+              <div className="qfield__photo-frame">
+                <img src={photo.previewUrl} alt="Photo capturée" />
+                <div className="qfield__photo-check">
+                  <Check size={14} />
+                </div>
+              </div>
+              <div className="qfield__photo-actions">
+                <button
+                  type="button"
+                  className="qfield__photo-action qfield__photo-action--secondary"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <RefreshCw size={14} />
+                  Reprendre
+                </button>
+              </div>
+            </div>
           ) : (
             <button
               type="button"
-              className="qfield__photo-btn"
+              className={`qfield__photo-cta ${required ? "qfield__photo-cta--required" : ""}`}
               onClick={() => fileInputRef.current?.click()}
             >
-              📷 Prendre une photo
+              <div className="qfield__photo-cta-icon">
+                {required ? <Camera size={22} /> : <ImageOff size={20} />}
+              </div>
+              <div className="qfield__photo-cta-text">
+                <div className="qfield__photo-cta-title">
+                  {required ? "Prendre une photo" : "Ajouter une photo (optionnel)"}
+                </div>
+                <div className="qfield__photo-cta-sub">
+                  {required
+                    ? "Caméra arrière recommandée · JPG/PNG"
+                    : "Tap pour ouvrir l'appareil photo"}
+                </div>
+              </div>
             </button>
           )}
         </div>
       );
+    }
 
     default:
       return (

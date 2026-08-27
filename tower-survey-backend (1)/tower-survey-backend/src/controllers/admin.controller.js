@@ -83,6 +83,7 @@ async function loadResponsesWithAnswers(conditions, params) {
      FROM survey_responses r
      JOIN sites s ON s.id = r.site_id
      JOIN users u ON u.id = r.technician_id
+     LEFT JOIN survey_templates tpl ON tpl.id = r.template_id
      ${where}
      ORDER BY r.submitted_at DESC NULLS LAST, r.id DESC
      LIMIT 5000`,
@@ -185,7 +186,7 @@ function fillAnswerColumns(record, tplQuestions, answersMap) {
 
 async function listAllResponses(req, res, next) {
   try {
-    const { site_id, technician_id, date_from, date_to, status, search, template_id } = req.query;
+    const { site_id, technician_id, date_from, date_to, status, search, template_id, template_category } = req.query;
     const conditions = [];
     const params = [];
 
@@ -193,6 +194,7 @@ async function listAllResponses(req, res, next) {
     if (technician_id) { params.push(technician_id); conditions.push(`r.technician_id = $${params.length}`); }
     if (status) { params.push(status); conditions.push(`r.status = $${params.length}`); }
     if (template_id) { params.push(template_id); conditions.push(`r.template_id = $${params.length}`); }
+    if (template_category) { params.push(template_category); conditions.push(`tpl.category = $${params.length}`); }
     if (date_from) { params.push(date_from); conditions.push(`r.submitted_at >= $${params.length}`); }
     if (date_to) { params.push(date_to); conditions.push(`r.submitted_at <= $${params.length}`); }
     if (search) {
@@ -312,11 +314,12 @@ async function buildExportData(queryParams) {
 function buildFilterConditions(queryParams) {
   const conditions = [];
   const params = [];
-  const { site_id, technician_id, date_from, date_to, status, template_id } = queryParams || {};
+  const { site_id, technician_id, date_from, date_to, status, template_id, template_category } = queryParams || {};
   if (site_id) { params.push(site_id); conditions.push(`r.site_id = $${params.length}`); }
   if (technician_id) { params.push(technician_id); conditions.push(`r.technician_id = $${params.length}`); }
   if (status) { params.push(status); conditions.push(`r.status = $${params.length}`); }
   if (template_id) { params.push(template_id); conditions.push(`r.template_id = $${params.length}`); }
+  if (template_category) { params.push(template_category); conditions.push(`tpl.category = $${params.length}`); }
   if (date_from) { params.push(date_from); conditions.push(`r.submitted_at >= $${params.length}`); }
   if (date_to) { params.push(date_to); conditions.push(`r.submitted_at <= $${params.length}`); }
   return { conditions, params };
@@ -426,7 +429,7 @@ async function exportExcel(req, res, next) {
        JOIN users u ON u.id = r.technician_id
        JOIN survey_questions q ON q.id = a.question_id
        JOIN survey_sections sec ON sec.id = q.section_id
-       ${conditions.length ? `WHERE ${conditions.join(" AND ").replace(/r\./g, "r.")}` : ""}
+       ${conditions.length ? `WHERE ${conditions.join(" AND ")}` : ""}
        ORDER BY r.submitted_at DESC NULLS LAST, sec.order_index ASC, q.order_index ASC
        LIMIT 20000`,
       params
@@ -468,7 +471,7 @@ async function exportExcel(req, res, next) {
 
 async function emailExport(req, res, next) {
   try {
-    const { to, format, site_id, technician_id, date_from, date_to, status, template_id } = req.body;
+    const { to, format, site_id, technician_id, date_from, date_to, status, template_id, template_category } = req.body;
     const recipient = to || process.env.SUPPORT_EMAIL || req.user.email;
 
     if (!recipient) {
@@ -476,7 +479,7 @@ async function emailExport(req, res, next) {
     }
 
     const { questionsByTemplate, templatesById } = await loadAllQuestions();
-    const { conditions, params } = buildFilterConditions({ site_id, technician_id, date_from, date_to, status, template_id });
+    const { conditions, params } = buildFilterConditions({ site_id, technician_id, date_from, date_to, status, template_id, template_category });
     const { responses, answersByResponse } = await loadResponsesWithAnswers(conditions, params);
 
     if (responses.length === 0) {

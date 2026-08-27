@@ -28,12 +28,18 @@
 .admin-export__form {
   background: linear-gradient(135deg, var(--white) 0%, #fafafa 100%);
   padding: var(--space-6);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-export__form:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .admin-export__options {

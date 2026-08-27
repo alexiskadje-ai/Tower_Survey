@@ -1,14 +1,17 @@
 const pool = require("../config/db");
 
 /**
- * GET /api/sites?cluster=Nord&search=xxx
- * Utilisé par le PWA pour mettre en cache la liste des sites (offline).
+ * GET /api/sites?cluster=Nord&search=xxx&limit=20
+ * Utilisé par le PWA pour mettre en cache la liste des sites (offline),
+ * et par la barre de recherche du formulaire d'audit pour auto-remplir
+ * les champs d'identification du site (IHS ID, Site Code, Region, Cluster, etc.).
  */
 async function listSites(req, res, next) {
   try {
-    const { cluster, search } = req.query;
+    const { cluster, search, limit } = req.query;
     const conditions = ["org_id = $1", "is_active = true"];
     const params = [req.user.orgId];
+    const maxLimit = Math.min(parseInt(limit, 10) || 50, 200);
 
     if (cluster) {
       params.push(cluster);
@@ -16,14 +19,25 @@ async function listSites(req, res, next) {
     }
     if (search) {
       params.push(`%${search}%`);
-      conditions.push(`(site_name ILIKE $${params.length} OR site_code ILIKE $${params.length})`);
+      // Cherche dans : IHS ID (site_code), Operator ID (operator_site_id), nom, ville/département
+      conditions.push(`(
+        site_code ILIKE $${params.length}
+        OR operator_site_id ILIKE $${params.length}
+        OR site_name ILIKE $${params.length}
+        OR address_village ILIKE $${params.length}
+        OR department ILIKE $${params.length}
+        OR arrondissement ILIKE $${params.length}
+      )`);
     }
 
     const { rows } = await pool.query(
-      `SELECT id, site_code, site_name, latitude, longitude, region, cluster, site_type, tower_owner
+      `SELECT id, site_code, operator_site_id, site_name, latitude, longitude,
+              region, cluster, site_type, tower_owner, access_status,
+              department, arrondissement, address_village
        FROM sites
        WHERE ${conditions.join(" AND ")}
-       ORDER BY site_code ASC`,
+       ORDER BY site_code ASC
+       LIMIT ${maxLimit}`,
       params
     );
 
