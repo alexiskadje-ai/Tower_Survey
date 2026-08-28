@@ -35,10 +35,27 @@ export function evaluateRequiredIf(rule, answersMap) {
     if (!cond || typeof cond.question_id !== "string" || !Array.isArray(cond.in)) return false;
     const answer = answersMap?.[cond.question_id];
     if (answer === undefined || answer === null || answer === "") return false;
-    // Comparaison insensible à la casse + trim pour absorber les variations UI
     const normalized = String(answer).trim().toLowerCase();
     return cond.in.some((v) => String(v).trim().toLowerCase() === normalized);
   });
+}
+
+/**
+ * Détermine si la question est "satisfaite" (au moins une photo prise).
+ * Gère les 3 modes :
+ *   - photo simple (validation_rules = null) : au moins 1 photo
+ *   - slots nommés : au moins 1 photo pour chaque slot déclaré
+ *   - liste libre : au moins 1 photo
+ */
+function isPhotoQuestionSatisfied(question, entry) {
+  const list = Array.isArray(entry) ? entry : (entry ? [entry] : []);
+  const rules = question.validation_rules || {};
+  const namedSlots = Array.isArray(rules.photo_slots) ? rules.photo_slots.filter((s) => typeof s === "string" && s.trim() !== "") : null;
+
+  if (namedSlots && namedSlots.length > 0) {
+    return namedSlots.every((s) => list.some((p) => p.slot === s));
+  }
+  return list.length > 0;
 }
 
 /**
@@ -48,7 +65,7 @@ export function evaluateRequiredIf(rule, answersMap) {
  *
  * @param {Array} sectionQuestions - Questions de la section courante
  * @param {object} answersMap - Map des réponses { questionId: value }
- * @param {object} photosMap - Map des photos déjà prises { questionId: { previewUrl, blob, ... } }
+ * @param {object} photosMap - Map { questionId: Array<{slot, previewUrl, ...}> | { previewUrl } }
  * @returns {Array<{ question, missing: boolean, triggered: boolean, reason: 'tier1'|'tier2'|'tier3' }>}
  */
 export function getPhotoRequirements(sectionQuestions, answersMap, photosMap) {
@@ -59,11 +76,12 @@ export function getPhotoRequirements(sectionQuestions, answersMap, photosMap) {
       const triggered = evaluateRequiredIf(question.conditional_logic, answersMap);
       const isTier1 = !!question.is_required;
       const required = isTier1 || triggered;
-      const hasPhoto = !!photosMap?.[question.id]?.previewUrl;
+      const entry = photosMap?.[question.id];
+      const satisfied = isPhotoQuestionSatisfied(question, entry);
       return {
         question,
         required,
-        missing: required && !hasPhoto,
+        missing: required && !satisfied,
         triggered,
         reason: isTier1 ? "tier1" : triggered ? "tier2" : "tier3",
       };

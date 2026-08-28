@@ -1,8 +1,18 @@
 const pool = require("../config/db");
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 const { createObjectCsvWriter } = require("csv-writer");
 const ExcelJS = require("exceljs");
+
+/**
+ * Répertoire temporaire pour les fichiers d'export générés à la volée
+ * (CSV, Excel, pièces jointes email). On utilise os.tmpdir() — JAMAIS
+ * UPLOAD_DIR — pour ne pas mélanger les preuves d'audit (photos
+ * conservées indéfiniment) avec des fichiers jetables. Voir README.md
+ * § "Pérennité des liens photo".
+ */
+const EXPORT_TMP_DIR = os.tmpdir();
 
 /**
  * Charge toutes les questions de tous les templates actifs (pour construire les colonnes d'export).
@@ -342,7 +352,7 @@ async function exportCsv(req, res, next) {
       return record;
     });
 
-    const filePath = path.join(process.env.UPLOAD_DIR || "./uploads", `audit-responses-${Date.now()}.csv`);
+    const filePath = path.join(EXPORT_TMP_DIR, `audit-responses-${Date.now()}-${process.pid}.csv`);
     const csvWriter = createObjectCsvWriter({ path: filePath, header: allColumns });
     await csvWriter.writeRecords(records);
 
@@ -457,7 +467,7 @@ async function exportExcel(req, res, next) {
       });
     });
 
-    const filePath = path.join(process.env.UPLOAD_DIR || "./uploads", `audit-responses-${Date.now()}.xlsx`);
+    const filePath = path.join(EXPORT_TMP_DIR, `audit-responses-${Date.now()}-${process.pid}.xlsx`);
     await workbook.xlsx.writeFile(filePath);
 
     res.download(filePath, `audit-responses-${Date.now()}.xlsx`, (err) => {
@@ -571,7 +581,7 @@ async function emailExport(req, res, next) {
         });
       });
 
-      attachmentPath = path.join(process.env.UPLOAD_DIR || "./uploads", `${fileName}.xlsx`);
+      attachmentPath = path.join(EXPORT_TMP_DIR, `${fileName}.xlsx`);
       contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
       await workbook.xlsx.writeFile(attachmentPath);
     } else {
@@ -586,7 +596,7 @@ async function emailExport(req, res, next) {
         return record;
       });
 
-      attachmentPath = path.join(process.env.UPLOAD_DIR || "./uploads", `${fileName}.csv`);
+      attachmentPath = path.join(EXPORT_TMP_DIR, `${fileName}.csv`);
       const csvWriter = createObjectCsvWriter({ path: attachmentPath, header: allColumns });
       await csvWriter.writeRecords(records);
     }

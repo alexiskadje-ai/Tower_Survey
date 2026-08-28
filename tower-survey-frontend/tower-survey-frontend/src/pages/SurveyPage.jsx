@@ -46,7 +46,7 @@ export default function SurveyPage() {
   const [template, setTemplate] = useState(null);
   const [draft, setDraft] = useState(null); // ligne Dexie draftResponses en cours
   const [answers, setAnswers] = useState({}); // { question_id: value }
-  const [photos, setPhotos] = useState({}); // { question_id: { previewUrl, blob, filename } }
+  const [photos, setPhotos] = useState({}); // { question_id: Array<{ slot, previewUrl, blob, filename }> }
   const [sectionIndex, setSectionIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitState, setSubmitState] = useState("idle"); // idle | saving | done
@@ -274,13 +274,35 @@ export default function SurveyPage() {
     }
   }
 
-  async function handleCapturePhoto(questionId, file) {
+  async function handleCapturePhoto(questionId, file, slot = null) {
     const previewUrl = URL.createObjectURL(file);
-    setPhotos((prev) => ({ ...prev, [questionId]: { previewUrl, blob: file, filename: file.name } }));
+    const entry = { slot, previewUrl, blob: file, filename: file.name };
+
+    setPhotos((prev) => {
+      const current = Array.isArray(prev[questionId]) ? prev[questionId] : [];
+      let next;
+      if (slot != null) {
+        // Mode slots nommés : on remplace la photo du même slot
+        const filtered = current.filter((p) => p.slot !== slot);
+        next = [...filtered, entry];
+      } else {
+        // Mode photo simple OU liste libre : on vérifie la limite photo_max
+        const rules = currentQuestionRules(questionId);
+        if (rules.isMulti) {
+          const max = rules.multiMax || 4;
+          if (current.length >= max) return prev; // limite atteinte, on ignore
+          next = [...current, entry];
+        } else {
+          next = [entry];
+        }
+      }
+      return { ...prev, [questionId]: next };
+    });
 
     await db.queuedMedia.add({
       response_client_uuid: draft.client_uuid,
       question_id: questionId,
+      slot: slot ?? null,
       blob: file,
       filename: file.name,
       status: "pending",
@@ -288,6 +310,23 @@ export default function SurveyPage() {
       gps_longitude: gpsRef.current?.longitude ?? null,
       captured_at: new Date().toISOString(),
     });
+  }
+
+  /**
+   * Lit validation_rules pour la question courante, retourne
+   *   { isMulti, multiMax, namedSlots }.
+   * Utilisé par handleCapturePhoto pour appliquer la limite photo_max.
+   */
+  function currentQuestionRules(questionId) {
+    const q = sections
+      .flatMap((s) => s.questions)
+      .find((x) => x.id === questionId);
+    if (!q) return { isMulti: false, multiMax: null, namedSlots: null };
+    const rules = q.validation_rules || {};
+    const namedSlots = Array.isArray(rules.photo_slots) ? rules.photo_slots.filter((s) => typeof s === "string" && s.trim() !== "") : null;
+    const isMulti = !!rules.photo_multi && !namedSlots;
+    const multiMax = Number.isFinite(rules.photo_max) && rules.photo_max > 0 ? Math.floor(rules.photo_max) : null;
+    return { isMulti, multiMax, namedSlots };
   }
 
   /**
@@ -505,8 +544,8 @@ export default function SurveyPage() {
                   question={q}
                   value={answers[q.id]}
                   onChange={(v) => handleAnswerChange(q.id, v)}
-                  photo={photos[q.id]}
-                  onCapturePhoto={(file) => handleCapturePhoto(q.id, file)}
+                  photos={photos[q.id] || []}
+                  onCapturePhoto={(file, slot) => handleCapturePhoto(q.id, file, slot)}
                   required={required}
                   requiredReason={reason}
                   highlight={highlightedPhotoId === q.id}

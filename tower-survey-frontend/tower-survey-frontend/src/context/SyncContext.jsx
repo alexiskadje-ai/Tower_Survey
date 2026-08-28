@@ -65,6 +65,7 @@ export function SyncProvider({ children }) {
           const formData = new FormData();
           formData.append("file", media.blob, media.filename);
           formData.append("question_id", media.question_id);
+          if (media.slot) formData.append("slot", media.slot);
           if (media.gps_latitude) formData.append("gps_latitude", media.gps_latitude);
           if (media.gps_longitude) formData.append("gps_longitude", media.gps_longitude);
           if (media.captured_at) formData.append("captured_at", media.captured_at);

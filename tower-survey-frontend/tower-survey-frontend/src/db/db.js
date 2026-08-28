@@ -22,4 +22,13 @@ db.version(2).stores({
   draftResponses: "client_uuid, site_id, status, submitted_at, template_id",
 });
 
+// v3 : support des photos multi-slot (Fix-on-visit "Avant/Après" et liste libre).
+// Chaque entrée de queuedMedia peut désormais porter un champ `slot` (string|null).
+// Aucun nouvel index n'est requis — on garde le schéma de table inchangé, le
+// champ est juste un attribut de la ligne.
+db.version(3).stores({
+  draftResponses: "client_uuid, site_id, status, submitted_at, template_id",
+  queuedMedia: "++localId, response_client_uuid, question_id, status",
+});
+
 export default db;

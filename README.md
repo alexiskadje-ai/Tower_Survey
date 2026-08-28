@@ -31,4 +31,11 @@ For Surveyors
 - Survey data analytics
 - Export to common formats (CSV, PDF, Excel)
 
+## Déploiement & pérennité des données
 
+Voir `tower-survey-backend/README.md` → section **"Pérennité des liens photo"** pour
+les règles critiques liées au stockage des photos d'audit :
+
+- Volume persistant Railway **obligatoire** (sinon perte de toutes les photos à chaque redéploiement)
+- Aucune suppression automatique des fichiers uploadés (preuves d'audit conservées indéfiniment)
+- Si migration vers S3/MinIO : bucket **public en lecture seule**, jamais d'URLs signées expirantes
