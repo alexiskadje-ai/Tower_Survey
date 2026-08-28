@@ -71,4 +71,66 @@ async function createSite(req, res, next) {
   }
 }
 
-module.exports = { listSites, createSite };
+/**
+ * GET /api/sites/completion-status?cluster=xxx
+ * Auth requis. Retourne pour chaque site de l'org :
+ *   { site_id, site_code, site_name, cluster, has_site_infrastructure, has_power_audit, is_complete }
+ *
+ * has_* = true si au moins une réponse 'submitted' existe pour ce site via
+ * un template de la catégorie correspondante.
+ */
+async function getCompletionStatus(req, res, next) {
+  try {
+    const { cluster } = req.query;
+    const params = [req.user.orgId];
+    let clusterFilter = "";
+    if (cluster) {
+      params.push(cluster);
+      clusterFilter = `AND s.cluster = $${params.length}`;
+    }
+
+    // LEFT JOIN agrégé : on ramène pour chaque site la liste des catégories
+    // distinctes pour lesquelles une réponse 'submitted' existe.
+    const { rows } = await pool.query(
+      `SELECT
+         s.id            AS site_id,
+         s.site_code     AS site_code,
+         s.site_name     AS site_name,
+         s.cluster       AS cluster,
+         COALESCE(
+           array_agg(DISTINCT t.category) FILTER (WHERE r.id IS NOT NULL AND r.status = 'submitted'),
+           ARRAY[]::varchar[]
+         ) AS submitted_categories
+       FROM sites s
+       LEFT JOIN survey_responses r
+         ON r.site_id = s.id AND r.status = 'submitted'
+       LEFT JOIN survey_templates t
+         ON t.id = r.template_id
+       WHERE s.org_id = $1 AND s.is_active = true ${clusterFilter}
+       GROUP BY s.id, s.site_code, s.site_name, s.cluster
+       ORDER BY s.site_code ASC`,
+      params
+    );
+
+    const result = rows.map((row) => {
+      const cats = row.submitted_categories || [];
+      const has_power_audit = cats.includes("Power Audit");
+      const has_site_infrastructure = cats.includes("Site Infrastructure");
+      return {
+        site_id: row.site_id,
+        site_code: row.site_code,
+        site_name: row.site_name,
+        cluster: row.cluster,
+        has_site_infrastructure,
+        has_power_audit,
+        is_complete: has_power_audit && has_site_infrastructure,
+      };
+    });
+
+    res.json({ count: result.length, sites: result });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { listSites, createSite, getCompletionStatus };

@@ -53,6 +53,10 @@ export const api = {
     const qs = new URLSearchParams(params).toString();
     return request(`/sites${qs ? `?${qs}` : ""}`);
   },
+  getCompletionStatus: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/sites/completion-status${qs ? `?${qs}` : ""}`);
+  },
   getActiveTemplates: () => request("/templates/active"),
   syncResponses: (responses) => request("/responses/sync", { method: "POST", body: { responses } }),
   listResponses: (params = {}) => {

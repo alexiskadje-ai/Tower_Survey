@@ -16,6 +16,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminResponses from "./pages/AdminResponses";
 import AdminExport from "./pages/AdminExport";
 import AdminResponseDetail from "./pages/AdminResponseDetail";
+import AdminCompletion from "./pages/AdminCompletion";
 
 export default function App() {
   return (
@@ -82,6 +83,14 @@ export default function App() {
               element={
                 <ProtectedAdminRoute>
                   <AdminExport />
+                </ProtectedAdminRoute>
+              }
+            />
+            <Route
+              path="/admin/completion"
+              element={
+                <ProtectedAdminRoute>
+                  <AdminCompletion />
                 </ProtectedAdminRoute>
               }
             />

@@ -88,6 +88,9 @@ export default function AdminDashboard() {
           <button type="button" className="btn btn-primary" onClick={() => navigate("/admin/responses")}>
             Voir toutes les réponses
           </button>
+          <button type="button" className="btn btn-secondary" onClick={() => navigate("/admin/completion")}>
+            Complétion par site
+          </button>
           <button type="button" className="btn btn-secondary" onClick={() => navigate("/admin/export")}>
             Exporter les données
           </button>
