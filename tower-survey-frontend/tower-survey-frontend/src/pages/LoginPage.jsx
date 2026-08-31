@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./LoginPage.css";
@@ -13,14 +13,40 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const successMessage = location.state?.message || null;
 
+  // Force le formulaire à être vierge à chaque entrée sur /login
+  // (re-mount, retour depuis une autre page, bouton "back" du navigateur…).
+  useEffect(() => {
+    setMatricule("");
+    setPassword("");
+    setError(null);
+    setLoading(false);
+  }, [location.pathname]);
+
+  // Sécurités supplémentaires : si l'utilisateur est déjà connecté,
+  // on le redirige vers /sites pour éviter qu'il voit un formulaire
+  // "fantôme" rempli par un state antérieur.
+  useEffect(() => {
+    if (localStorage.getItem("ti_token")) {
+      navigate("/sites", { replace: true });
+    }
+  }, [navigate]);
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
       await login(matricule.trim(), password);
+      // Nettoie le formulaire avant la redirection pour qu'un éventuel
+      // retour sur /login (back navigateur) affiche un formulaire vide.
+      setMatricule("");
+      setPassword("");
       navigate("/sites", { replace: true });
     } catch (err) {
+      // En cas d'échec on efface systématiquement le mot de passe
+      // (jamais conservé côté UI). Le matricule est conservé pour
+      // permettre à l'utilisateur de ne corriger que le mot de passe.
+      setPassword("");
       setError(
         err.status === 401
           ? "Matricule ou mot de passe incorrect."
@@ -43,7 +69,7 @@ export default function LoginPage() {
         <p className="login__subtitle">Audit Pylône — Collecte terrain</p>
       </div>
 
-      <form className="login__card card" onSubmit={handleSubmit}>
+      <form className="login__card card" onSubmit={handleSubmit} autoComplete="off">
         {successMessage && <p className="login__success">{successMessage}</p>}
         {error && <p className="login__error">{error}</p>}
 
@@ -51,6 +77,8 @@ export default function LoginPage() {
           <label className="field-label" htmlFor="matricule">Matricule ou E-mail</label>
           <input
             id="matricule"
+            name="matricule"
+            key={`matricule-${location.key}`}
             className="text-input mono"
             value={matricule}
             onChange={(e) => setMatricule(e.target.value)}
@@ -65,7 +93,9 @@ export default function LoginPage() {
           <label className="field-label" htmlFor="password">Mot de passe</label>
           <input
             id="password"
+            name="password"
             type="password"
+            key={`password-${location.key}`}
             className="text-input"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
