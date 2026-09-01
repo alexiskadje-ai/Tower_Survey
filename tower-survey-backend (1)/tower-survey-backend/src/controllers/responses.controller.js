@@ -186,12 +186,41 @@ async function syncResponses(req, res, next) {
 
       await client.query("BEGIN");
 
+      // Règle "deux check-ins obligatoires" :
+      // si la réponse référence un session_id, on exige qu'au moins un
+      // check-in ACTIF existe pour chacun des rôles (lead + assistant).
+      // Pas de hard-block sur flag (cf. spec : flag = review superviseur).
+      if (item.session_id) {
+        const { rows: ckRows } = await client.query(
+          `SELECT
+              bool_or(role = 'lead'      AND superseded_at IS NULL) AS has_lead,
+              bool_or(role = 'assistant' AND superseded_at IS NULL) AS has_assistant,
+              bool_or(flagged) AS any_flagged
+           FROM checkin_verifications WHERE session_id = $1`,
+          [item.session_id]
+        );
+        const counts = ckRows[0] || {};
+        if (!counts.has_lead || !counts.has_assistant) {
+          // On rollback et on remonte une erreur ciblée pour que le
+          // SyncContext sache qu'il doit attendre et réessayer.
+          await client.query("ROLLBACK");
+          results.push({
+            client_uuid,
+            status: "error",
+            error: "checkins_pending",
+            detail: "Les deux check-ins (lead + assistant) doivent être synchronisés avant la réponse.",
+          });
+          continue; // le `finally` libère le client
+        }
+      }
+
       // Upsert de la réponse — idempotent sur client_uuid
       const { rows } = await client.query(
         `INSERT INTO survey_responses
            (client_uuid, template_id, site_id, technician_id, device_id,
-            started_at, submitted_at, status, gps_latitude, gps_longitude, gps_accuracy_m)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,'submitted',$8,$9,$10)
+            started_at, submitted_at, status, gps_latitude, gps_longitude, gps_accuracy_m,
+            checkin_session_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'submitted',$8,$9,$10,$11)
          ON CONFLICT (client_uuid)
          DO UPDATE SET
            submitted_at = EXCLUDED.submitted_at,
@@ -201,7 +230,7 @@ async function syncResponses(req, res, next) {
            synced_at = now()
          RETURNING id`,
         [client_uuid, template_id, site_id, req.user.id, device_id, started_at, submitted_at,
-         gps_latitude, gps_longitude, gps_accuracy_m]
+         gps_latitude, gps_longitude, gps_accuracy_m, item.session_id || null]
       );
 
       const responseId = rows[0].id;

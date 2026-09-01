@@ -17,12 +17,15 @@ import AdminResponses from "./pages/AdminResponses";
 import AdminExport from "./pages/AdminExport";
 import AdminResponseDetail from "./pages/AdminResponseDetail";
 import AdminCompletion from "./pages/AdminCompletion";
+import CheckInGate from "./pages/CheckInGate";
 
 export default function App() {
   return (
     <AuthProvider>
       <SyncProvider>
-        <BrowserRouter>
+        <BrowserRouter
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        >
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
@@ -35,6 +38,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <SitesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/checkin/:type"
+              element={
+                <ProtectedRoute>
+                  <CheckInGate />
                 </ProtectedRoute>
               }
             />

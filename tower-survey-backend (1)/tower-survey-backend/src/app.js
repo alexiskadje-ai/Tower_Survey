@@ -10,6 +10,7 @@ const templatesRoutes = require("./routes/templates.routes");
 const responsesRoutes = require("./routes/responses.routes");
 const adminRoutes = require("./routes/admin.routes");
 const exportRoutes = require("./routes/export.routes");
+const checkinRoutes = require("./routes/checkin.routes");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
@@ -29,6 +30,7 @@ app.use("/api/templates", templatesRoutes);
 app.use("/api/responses", responsesRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/export", exportRoutes);
+app.use("/api/checkin", checkinRoutes);
 
 app.use((req, res) => res.status(404).json({ error: "Route introuvable" }));
 app.use(errorHandler);

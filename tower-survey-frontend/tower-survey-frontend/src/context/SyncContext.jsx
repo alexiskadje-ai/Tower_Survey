@@ -13,8 +13,52 @@ export function SyncProvider({ children }) {
   const syncingRef = useRef(false);
 
   const refreshPendingCount = useCallback(async () => {
-    const count = await db.draftResponses.where("status").equals("queued").count();
-    setPendingCount(count);
+    const [drafts, checkins] = await Promise.all([
+      db.draftResponses.where("status").equals("queued").count(),
+      db.queuedCheckins.where("status").equals("pending").count(),
+    ]);
+    setPendingCount(drafts + checkins);
+  }, []);
+
+  // Flush des check-ins en attente (multipart upload). Best-effort : on
+  // loggue sans bloquer. À appeler AVANT de tenter la sync des réponses,
+  // car le serveur rejettera toute réponse dont la session n'a pas
+  // encore ses deux check-ins en base.
+  const flushQueuedCheckins = useCallback(async () => {
+    const pending = await db.queuedCheckins.where("status").equals("pending").toArray();
+    for (const item of pending) {
+      try {
+        // Récupère la session côté serveur (idempotent sur client_uuid)
+        const session = await api.createCheckinSession({
+          client_uuid: item.session_client_uuid,
+        });
+
+        // Attache le site si on le connaît maintenant
+        if (item.site_id) {
+          try {
+            await api.attachSiteToCheckinSession(session.id, item.site_id);
+          } catch {
+            // non-bloquant : on pourra attacher plus tard
+          }
+        }
+
+        const formData = new FormData();
+        formData.append("file", item.blob, item.filename || "selfie.jpg");
+        formData.append("session_id", session.id);
+        formData.append("role", item.role);
+        if (item.user_id) formData.append("user_id_override", item.user_id);
+        if (item.latitude != null) formData.append("latitude", String(item.latitude));
+        if (item.longitude != null) formData.append("longitude", String(item.longitude));
+        if (item.gps_accuracy_meters != null) formData.append("gps_accuracy_meters", String(item.gps_accuracy_meters));
+        if (item.device_fingerprint) formData.append("device_fingerprint", item.device_fingerprint);
+        if (item.captured_at) formData.append("captured_at", item.captured_at);
+
+        await api.uploadCheckinSelfie(formData);
+        await db.queuedCheckins.update(item.localId, { status: "uploaded", server_session_id: session.id });
+      } catch (err) {
+        await db.queuedCheckins.update(item.localId, { status: "pending", error: err.message });
+      }
+    }
   }, []);
 
   const runSync = useCallback(async () => {
@@ -24,6 +68,10 @@ export function SyncProvider({ children }) {
     setLastSyncError(null);
 
     try {
+      // 1) Check-ins d'abord (sans eux, la sync des réponses échoue avec
+      //    "checkins_pending"). Best-effort, on continue même si partiel.
+      await flushQueuedCheckins();
+
       const queued = await db.draftResponses.where("status").equals("queued").toArray();
 
       if (queued.length > 0) {
@@ -38,6 +86,7 @@ export function SyncProvider({ children }) {
           gps_accuracy_m: r.gps_accuracy_m,
           device_id: r.device_id,
           answers: r.answers,
+          session_id: r.checkin_session_id || null,
         }));
 
         const { results } = await api.syncResponses(payload);
@@ -99,7 +148,7 @@ export function SyncProvider({ children }) {
   }, [runSync]);
 
   return (
-    <SyncContext.Provider value={{ isOnline, isSyncing, pendingCount, lastSyncError, runSync, refreshPendingCount }}>
+    <SyncContext.Provider value={{ isOnline, isSyncing, pendingCount, lastSyncError, runSync, refreshPendingCount, flushQueuedCheckins }}>
       {children}
     </SyncContext.Provider>
   );

@@ -79,6 +79,32 @@ export const api = {
     return request(`/admin/responses/export/excel${qs ? `?${qs}` : ""}`, { raw: true }).then((res) => handleDownload(res, "xlsx"));
   },
   adminEmailExport: (body) => request("/admin/responses/email", { method: "POST", body }),
+
+  // --- Check-in (dual-technician) ----------------------------------------
+  // Toutes les méthodes renvoient une réponse JSON.
+  // Pour l'upload selfie (multipart), on utilise un fetch direct avec
+  // un FormData, comme uploadMedia.
+  createCheckinSession: ({ client_uuid, site_id }) =>
+    request("/checkin/session", { method: "POST", body: { client_uuid, site_id } }),
+  attachSiteToCheckinSession: (sessionId, site_id) =>
+    request(`/checkin/session/${sessionId}`, { method: "PATCH", body: { site_id } }),
+  getCheckinSession: (sessionId) => request(`/checkin/session/${sessionId}`),
+  verifySecondTechnician: (body) =>
+    request("/checkin/verify-second-technician", { method: "POST", body }),
+  uploadCheckinSelfie: (formData) =>
+    fetch(`${API_BASE}/checkin`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${getToken()}` },
+      body: formData,
+    }).then(async (res) => {
+      const data = res.ok ? await res.json() : await res.json().catch(() => null);
+      if (!res.ok) {
+        const err = new Error(data?.error || `Erreur checkin (${res.status})`);
+        err.status = res.status;
+        throw err;
+      }
+      return data;
+    }),
 };
 
 async function handleDownload(res, ext) {

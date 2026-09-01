@@ -56,7 +56,7 @@ export default function SitesPage() {
                   "--accent-bg": tpl.accentBg,
                   "--accent-border": tpl.accentBorder,
                 }}
-                onClick={() => navigate(`/survey/${tpl.type}`)}
+                onClick={() => navigate(`/checkin/${tpl.type}`)}
               >
                 <div className="template-card__icon">
                   <Icon size={28} />

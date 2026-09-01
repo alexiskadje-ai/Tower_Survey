@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Zap, Building2, AlertTriangle } from "lucide-react";
 import { db } from "../db/db";
 import { api } from "../api/client";
@@ -39,6 +39,8 @@ function newDeviceId() {
 export default function SurveyPage() {
   const { type } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const sessionId = searchParams.get("session"); // UUID de la checkin session (si CheckInGate)
   const { user } = useAuth();
   const { runSync } = useSync();
 
@@ -137,7 +139,13 @@ export default function SurveyPage() {
           gps_latitude: null,
           gps_longitude: null,
           gps_accuracy_m: null,
+          checkin_session_id: sessionId || null,
         };
+        await db.draftResponses.put(activeDraft);
+      } else if (activeDraft && sessionId && !activeDraft.checkin_session_id) {
+        // Reprise d'un ancien brouillon SANS session, mais on arrive via
+        // CheckInGate : on colle la session au draft.
+        activeDraft = { ...activeDraft, checkin_session_id: sessionId };
         await db.draftResponses.put(activeDraft);
       }
 
@@ -271,6 +279,27 @@ export default function SurveyPage() {
     setSite(pickedSite);
     if (draft) {
       await db.draftResponses.update(draft.client_uuid, { site_id: pickedSite.id });
+    }
+
+    // Attache le site à la session de check-in (si on en a une).
+    // C'est ce qui déclenchera côté serveur le calcul de distance
+    // haversine et le flag éventuel sur les check-ins déjà reçus.
+    if (draft?.checkin_session_id) {
+      const localSession = await db.checkinSessions.get(draft.checkin_session_id);
+      if (localSession?.server_id && navigator.onLine) {
+        try {
+          await api.attachSiteToCheckinSession(localSession.server_id, pickedSite.id);
+        } catch (err) {
+          // non-bloquant : on retentera à la prochaine sync
+          console.warn("attachSiteToCheckinSession:", err?.message);
+        }
+      }
+      // On garde le site_id au niveau local aussi pour qu'un check-in
+      // capturé plus tard (rare mais possible si le lead re-prend un
+      // selfie) puisse être rattaché à la session offline.
+      if (localSession) {
+        await db.checkinSessions.update(localSession.id, { site_id: pickedSite.id });
+      }
     }
   }
 
