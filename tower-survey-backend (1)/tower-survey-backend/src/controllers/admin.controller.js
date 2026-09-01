@@ -643,10 +643,170 @@ async function emailExport(req, res, next) {
   }
 }
 
+// =====================================================================
+// Admin — gestion des utilisateurs
+// =====================================================================
+
+/**
+ * GET /api/admin/users
+ * Liste les utilisateurs de l'org courant. Aucun mot de passe.
+ */
+async function listUsers(req, res, next) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, full_name, matricule, email, phone, role, cluster,
+              is_active, is_email_verified, created_at
+       FROM users
+       WHERE org_id = $1
+       ORDER BY role DESC, full_name ASC`,
+      [req.user.orgId]
+    );
+    res.json({ count: rows.length, users: rows });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * PATCH /api/admin/users/:userId/role
+ * Body : { role: 'admin' | 'technician' }
+ *
+ * Garde-fous :
+ *  - refuse de retirer le dernier admin de l'org (sinon plus aucun
+ *    admin ne peut se connecter au dashboard).
+ *  - refuse qu'un admin se retire son propre rôle (trop risqué :
+ *    un faux clic et on ne peut plus rien corriger).
+ */
+async function updateUserRole(req, res, next) {
+  try {
+    const { userId } = req.params;
+    const { role } = req.body || {};
+
+    if (!["admin", "technician"].includes(role)) {
+      return res.status(400).json({ error: "Rôle invalide (attendu: 'admin' | 'technician')" });
+    }
+
+    // Vérifie que la cible existe dans l'org courant
+    const { rows: targetRows } = await pool.query(
+      `SELECT id, role FROM users WHERE id = $1 AND org_id = $2 LIMIT 1`,
+      [userId, req.user.orgId]
+    );
+    if (targetRows.length === 0) {
+      return res.status(404).json({ error: "Utilisateur introuvable dans cet org" });
+    }
+    const target = targetRows[0];
+
+    // Si on démotorise un admin, vérifier qu'il en restera au moins un
+    if (target.role === "admin" && role === "technician") {
+      const { rows: countRows } = await pool.query(
+        `SELECT count(*)::int AS n FROM users
+         WHERE org_id = $1 AND role = 'admin' AND is_active = true`,
+        [req.user.orgId]
+      );
+      const remaining = countRows[0].n - 1; // on va perdre celui-ci
+      if (remaining < 1) {
+        return res.status(400).json({
+          error: "Impossible de retirer le dernier administrateur de l'organisation. Promeut d'abord quelqu'un d'autre au rôle admin.",
+        });
+      }
+      if (target.id === req.user.id) {
+        return res.status(400).json({
+          error: "Tu ne peux pas te retirer ton propre rôle admin. Demande à un autre admin de le faire.",
+        });
+      }
+    }
+
+    const { rows } = await pool.query(
+      `UPDATE users SET role = $1
+       WHERE id = $2 AND org_id = $3
+       RETURNING id, full_name, email, role, is_active, created_at`,
+      [role, userId, req.user.orgId]
+    );
+    res.json({ user: rows[0] });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// =====================================================================
+// Admin — monitoring des check-ins (polling)
+// =====================================================================
+
+/**
+ * GET /api/admin/checkins/recent?limit=50&since=ISO_TIMESTAMP
+ * Renvoie les check-ins récents (non superseded), avec le nom du
+ * technicien, le site, la distance et le flag.
+ *
+ * - `limit` (def 50, max 200) borne le nombre de lignes
+ * - `since` (ISO 8601) : si présent, ne renvoie que les check-ins
+ *   dont synced_at > since. Pratique pour le polling incrémental.
+ */
+async function listRecentCheckins(req, res, next) {
+  try {
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200);
+    const since = req.query.since ? new Date(req.query.since) : null;
+
+    const params = [req.user.orgId];
+    let sinceClause = "";
+    if (since && !isNaN(since.getTime())) {
+      params.push(since.toISOString());
+      sinceClause = `AND v.synced_at > $${params.length}`;
+    }
+    params.push(limit);
+    const limitParamIdx = params.length;
+
+    const { rows } = await pool.query(
+      `SELECT
+         v.id,
+         v.session_id,
+         v.role,
+         v.selfie_url,
+         v.latitude,
+         v.longitude,
+         v.gps_accuracy_meters,
+         v.distance_to_tower_meters,
+         v.flagged,
+         v.flag_reason,
+         v.device_fingerprint,
+         v.captured_at,
+         v.synced_at,
+         v.superseded_at,
+         u.id          AS user_id,
+         u.full_name   AS technician_name,
+         u.matricule   AS technician_matricule,
+         s.id          AS site_id,
+         s.site_code,
+         s.site_name,
+         s.cluster
+       FROM checkin_verifications v
+       JOIN users u ON u.id = v.user_id
+       JOIN checkin_sessions sess ON sess.id = v.session_id
+       LEFT JOIN sites s ON s.id = sess.site_id
+       WHERE sess.org_id = $1
+         ${sinceClause}
+       ORDER BY v.synced_at DESC
+       LIMIT $${limitParamIdx}`,
+      params
+    );
+
+    res.json({
+      count: rows.length,
+      serverTime: new Date().toISOString(),
+      checkins: rows,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   listAllResponses,
   getResponseDetailAdmin,
   exportCsv,
   exportExcel,
   emailExport,
+  // --- ajoutés pour le système d'admin + monitoring check-ins ---
+  listUsers,
+  updateUserRole,
+  listRecentCheckins,
 };

@@ -1,0 +1,275 @@
+.admin-checkins {
+  flex: 1;
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.admin-checkins__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.admin-checkins__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--charcoal-600);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  padding: 4px 8px;
+  margin: 0 0 var(--space-1) -8px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+
+.admin-checkins__back:hover { color: var(--teal-700); background: var(--teal-050); }
+
+.admin-checkins__title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--charcoal-900);
+  margin: 0;
+}
+
+.admin-checkins__subtitle {
+  font-size: var(--text-sm);
+  color: var(--charcoal-500);
+  margin: var(--space-1) 0 0;
+}
+
+.admin-checkins__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.admin-checkins__filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  color: var(--charcoal-700);
+  background: var(--white);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-3);
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.admin-checkins__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--charcoal-500);
+}
+
+.admin-checkins__last-update {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-style: italic;
+}
+
+.admin-checkins__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.admin-checkins__error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--status-nok-bg);
+  color: var(--status-nok);
+  border: 1px solid var(--status-nok);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  margin: 0;
+}
+
+.admin-checkins__empty {
+  text-align: center;
+  padding: var(--space-7) var(--space-4);
+  color: var(--charcoal-500);
+  background: var(--white);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+}
+
+.admin-checkins__table-wrap {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow-x: auto;
+}
+
+.admin-checkins__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.admin-checkins__table th,
+.admin-checkins__table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  color: var(--charcoal-700);
+}
+
+.admin-checkins__table th {
+  background: var(--stone-100);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--charcoal-700);
+  white-space: nowrap;
+}
+
+.admin-checkins__table tbody tr.is-flagged { background: #fef2f2; }
+.admin-checkins__table tbody tr.is-flagged:hover { background: #fee2e2; }
+.admin-checkins__table tbody tr:hover { background: var(--stone-050); }
+.admin-checkins__table tbody tr:last-child td { border-bottom: none; }
+
+.admin-checkins__thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--stone-100);
+  border: 1px solid var(--border);
+  padding: 0;
+  cursor: pointer;
+  display: block;
+}
+
+.admin-checkins__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.admin-checkins__tech { display: flex; flex-direction: column; }
+.admin-checkins__sub {
+  font-size: var(--text-xs);
+  color: var(--charcoal-500);
+  margin-top: 2px;
+}
+
+.admin-checkins__flag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  background: var(--status-nok-bg);
+  color: var(--status-nok);
+  border: 1px solid var(--status-nok);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: normal;
+  max-width: 220px;
+}
+
+.admin-checkins__lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: var(--space-4);
+}
+
+.admin-checkins__lightbox-close {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--charcoal-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+}
+
+.admin-checkins__lightbox-content {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  max-width: 720px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: var(--shadow-dropdown);
+}
+
+.admin-checkins__lightbox-content img {
+  width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  background: #000;
+}
+
+.admin-checkins__lightbox-info {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--charcoal-700);
+  font-size: var(--text-sm);
+}
+
+.admin-checkins__lightbox-info h3 {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--charcoal-900);
+  margin: 0 0 var(--space-2);
+}
+
+.admin-checkins__lightbox-info p {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+}
+
+.admin-checkins__lightbox-flag {
+  color: var(--status-nok);
+  font-weight: 600;
+}
+
+.muted { color: var(--charcoal-400); }
+
+@media (max-width: 640px) {
+  .admin-checkins__stats { grid-template-columns: 1fr; }
+  .admin-checkins__table th:nth-child(5),
+  .admin-checkins__table td:nth-child(5),
+  .admin-checkins__table th:nth-child(6),
+  .admin-checkins__table td:nth-child(6) {
+    display: none;
+  }
+}

@@ -188,6 +188,11 @@
   color: var(--teal-700);
 }
 
+.pill--info {
+  background: #e0f2fe;
+  color: #075985;
+}
+
 .pill--pending {
   background: #fffbeb;
   color: #b45309;

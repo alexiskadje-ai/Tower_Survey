@@ -17,6 +17,8 @@ import AdminResponses from "./pages/AdminResponses";
 import AdminExport from "./pages/AdminExport";
 import AdminResponseDetail from "./pages/AdminResponseDetail";
 import AdminCompletion from "./pages/AdminCompletion";
+import AdminCheckins from "./pages/AdminCheckins";
+import AdminUsers from "./pages/AdminUsers";
 import CheckInGate from "./pages/CheckInGate";
 
 export default function App() {
@@ -102,6 +104,22 @@ export default function App() {
               element={
                 <ProtectedAdminRoute>
                   <AdminCompletion />
+                </ProtectedAdminRoute>
+              }
+            />
+            <Route
+              path="/admin/checkins"
+              element={
+                <ProtectedAdminRoute>
+                  <AdminCheckins />
+                </ProtectedAdminRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedAdminRoute>
+                  <AdminUsers />
                 </ProtectedAdminRoute>
               }
             />

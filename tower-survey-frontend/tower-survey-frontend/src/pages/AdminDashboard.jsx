@@ -91,6 +91,12 @@ export default function AdminDashboard() {
           <button type="button" className="btn btn-secondary" onClick={() => navigate("/admin/completion")}>
             Complétion par site
           </button>
+          <button type="button" className="btn btn-secondary" onClick={() => navigate("/admin/checkins")}>
+            Monitoring check-ins
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={() => navigate("/admin/users")}>
+            Gestion des utilisateurs
+          </button>
           <button type="button" className="btn btn-secondary" onClick={() => navigate("/admin/export")}>
             Exporter les données
           </button>

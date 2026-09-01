@@ -80,6 +80,17 @@ export const api = {
   },
   adminEmailExport: (body) => request("/admin/responses/email", { method: "POST", body }),
 
+  // --- Admin (rôle requis) -----------------------------------------------
+  // On garde les appels groupés sous api.admin* pour rappeler côté UI
+  // que ces endpoints exigent un utilisateur admin côté backend.
+  adminListUsers: () => request("/admin/users"),
+  adminUpdateUserRole: (userId, role) =>
+    request(`/admin/users/${userId}/role`, { method: "PATCH", body: { role } }),
+  adminListRecentCheckins: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/admin/checkins/recent${qs ? `?${qs}` : ""}`);
+  },
+
   // --- Check-in (dual-technician) ----------------------------------------
   // Toutes les méthodes renvoient une réponse JSON.
   // Pour l'upload selfie (multipart), on utilise un fetch direct avec
